@@ -1,12 +1,17 @@
 package com.kritim_mind.sms_project.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 @Entity
-@Data
-@Table(name="admins")
+@Table(name = "admins")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Admin {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -15,13 +20,21 @@ public class Admin {
     @Column(nullable = false, unique = true, length = 100)
     private String username;
 
-    @Column(nullable = false, length = 255)
+    @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
+    @Column(name = "total_sms_credits")
+    private Integer totalSmsCredits = 0;
+
+    @Column(name = "used_sms_credits")
+    private Integer usedSmsCredits = 0;
+
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    @PrePersist
-    public void prePersist() {
-        this.createdAt = LocalDateTime.now();
+    @Transient
+    public Integer getRemainingCredits() {
+        return totalSmsCredits - usedSmsCredits;
     }
 }

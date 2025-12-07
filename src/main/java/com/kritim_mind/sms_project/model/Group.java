@@ -1,15 +1,23 @@
 package com.kritim_mind.sms_project.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Data
-@Table(name="groups")
+@Table(name = "groups", indexes = {
+        @Index(name = "idx_group_deleted", columnList = "is_deleted")
+})
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Group {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,10 +29,8 @@ public class Group {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "is_deleted")
     private Boolean isDeleted = false;
-
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 
     @ManyToMany
     @JoinTable(
@@ -32,16 +38,14 @@ public class Group {
             joinColumns = @JoinColumn(name = "group_id"),
             inverseJoinColumns = @JoinColumn(name = "contact_id")
     )
-
+    @Builder.Default
     private Set<Contact> contacts = new HashSet<>();
 
-    @PrePersist
-    public void prePersist() {
-        createdAt = LocalDateTime.now();
-    }
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
 
-    @PreUpdate
-    public void preUpdate() {
-        updatedAt = LocalDateTime.now();
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
     }
-}
