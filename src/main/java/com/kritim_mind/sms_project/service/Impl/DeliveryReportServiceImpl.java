@@ -1,4 +1,4 @@
-package com.kritim_mind.sms_project.service;
+package com.kritim_mind.sms_project.service.Impl;
 
 import com.kritim_mind.sms_project.dto.request.DeliveryReportRequest;
 import com.kritim_mind.sms_project.dto.response.DeliveryReportResponse;
@@ -8,6 +8,7 @@ import com.kritim_mind.sms_project.model.MessageRecipient;
 import com.kritim_mind.sms_project.model.MessageStatus;
 import com.kritim_mind.sms_project.repository.DeliveryReportRepository;
 import com.kritim_mind.sms_project.repository.MessageRecipientRepository;
+import com.kritim_mind.sms_project.service.Interface.DeliveryReportService;
 import com.kritim_mind.sms_project.utils.ResourceNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -21,29 +22,35 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class DeliveryReportService {
+public class DeliveryReportServiceImpl implements DeliveryReportService {
 
     private final DeliveryReportRepository reportRepository;
     private final MessageRecipientRepository recipientRepository;
 
+    @Override
     @Transactional
     public List<DeliveryReportResponse> getReportsByRecipientId(Long recipientId) {
         List<DeliveryReport> reports = reportRepository.findByMessageRecipientId(recipientId);
+
         return reports.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
+    @Override
     @Transactional
     public DeliveryReportResponse getReportById(Long id) {
         DeliveryReport report = reportRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Delivery report not found"));
+
         return mapToResponse(report);
     }
 
+    @Override
     @Transactional
     public DeliveryReportResponse createDeliveryReport(Long recipientId,
                                                        DeliveryReportRequest request) {
+
         log.info("Creating delivery report for recipient ID: {}", recipientId);
 
         MessageRecipient recipient = recipientRepository.findById(recipientId)
@@ -57,7 +64,7 @@ public class DeliveryReportService {
 
         report = reportRepository.save(report);
 
-        // Update recipient status based on delivery report
+        // Update recipient message status
         if (request.getStatus() == DeliveryStatus.DELIVERED) {
             recipient.setStatus(MessageStatus.DELIVERED);
             recipient.setDeliveredAt(LocalDateTime.now());
@@ -73,6 +80,7 @@ public class DeliveryReportService {
         return mapToResponse(report);
     }
 
+    @Override
     @Transactional
     public DeliveryReportResponse updateDeliveryReport(Long id, DeliveryReportRequest request) {
         log.info("Updating delivery report ID: {}", id);
@@ -84,11 +92,13 @@ public class DeliveryReportService {
         report.setDescription(request.getDescription());
 
         report = reportRepository.save(report);
+
         log.info("Delivery report updated successfully");
 
         return mapToResponse(report);
     }
 
+    @Override
     @Transactional
     public void deleteDeliveryReport(Long id) {
         log.info("Deleting delivery report ID: {}", id);
@@ -98,9 +108,13 @@ public class DeliveryReportService {
         }
 
         reportRepository.deleteById(id);
+
         log.info("Delivery report deleted successfully");
     }
 
+    // ------------------------
+    // Mapping helper
+    // ------------------------
     private DeliveryReportResponse mapToResponse(DeliveryReport report) {
         DeliveryReportResponse response = new DeliveryReportResponse();
         response.setId(report.getId());

@@ -20,6 +20,9 @@ public class Admin {
     @Column(nullable = false, unique = true, length = 100)
     private String username;
 
+    @Column(nullable = false, unique = true)
+    private String email;
+
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 

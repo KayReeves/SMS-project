@@ -1,9 +1,10 @@
-package com.kritim_mind.sms_project.service;
+package com.kritim_mind.sms_project.service.Impl;
 
 import com.kritim_mind.sms_project.dto.request.ContactRequest;
 import com.kritim_mind.sms_project.dto.response.ContactResponse;
 import com.kritim_mind.sms_project.model.Contact;
 import com.kritim_mind.sms_project.repository.ContactRepository;
+import com.kritim_mind.sms_project.service.Interface.ContactService;
 import com.kritim_mind.sms_project.utils.DuplicateResourceException;
 import com.kritim_mind.sms_project.utils.ResourceNotFoundException;
 import jakarta.transaction.Transactional;
@@ -17,9 +18,11 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class ContactService {
+public class ContactServiceImpl implements ContactService {
+
     private final ContactRepository contactRepository;
 
+    @Override
     @Transactional
     public List<ContactResponse> getAllContacts(Boolean isDeleted) {
         List<Contact> contacts = isDeleted != null
@@ -31,6 +34,7 @@ public class ContactService {
                 .collect(Collectors.toList());
     }
 
+    @Override
     @Transactional
     public ContactResponse getContactById(Long id) {
         Contact contact = contactRepository.findByIdAndIsDeleted(id, false)
@@ -38,6 +42,7 @@ public class ContactService {
         return mapToResponse(contact);
     }
 
+    @Override
     @Transactional
     public ContactResponse createContact(ContactRequest request) {
         log.info("Creating contact: {}", request.getName());
@@ -58,6 +63,7 @@ public class ContactService {
         return mapToResponse(contact);
     }
 
+    @Override
     @Transactional
     public ContactResponse updateContact(Long id, ContactRequest request) {
         log.info("Updating contact ID: {}", id);
@@ -79,6 +85,7 @@ public class ContactService {
         return mapToResponse(contact);
     }
 
+    @Override
     @Transactional
     public void deleteContact(Long id) {
         log.info("Soft deleting contact ID: {}", id);
@@ -101,5 +108,4 @@ public class ContactService {
         response.setUpdatedAt(contact.getUpdatedAt());
         return response;
     }
-
 }

@@ -20,11 +20,13 @@ public class DataInitializer {
         return args -> {
             String defaultUsername = "admin";
             String defaultPassword = "admin123";
+            String defaultEmail = "admin@gmail.com";
 
             if (adminRepository.findByUsername(defaultUsername).isEmpty()) {
                 Admin admin = new Admin();
                 admin.setUsername(defaultUsername);
                 admin.setPasswordHash(passwordEncoder.encode(defaultPassword));
+                admin.setEmail(defaultEmail);
                 admin.setTotalSmsCredits(1000);
                 admin.setUsedSmsCredits(0);
 

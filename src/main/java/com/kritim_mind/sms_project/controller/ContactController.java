@@ -3,7 +3,7 @@ package com.kritim_mind.sms_project.controller;
 import com.kritim_mind.sms_project.dto.request.ContactRequest;
 import com.kritim_mind.sms_project.dto.response.ApiResponse;
 import com.kritim_mind.sms_project.dto.response.ContactResponse;
-import com.kritim_mind.sms_project.service.ContactService;
+import com.kritim_mind.sms_project.service.Interface.ContactService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

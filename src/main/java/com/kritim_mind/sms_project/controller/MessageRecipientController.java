@@ -3,7 +3,7 @@ package com.kritim_mind.sms_project.controller;
 import com.kritim_mind.sms_project.dto.request.RecipientStatusUpdateRequest;
 import com.kritim_mind.sms_project.dto.response.ApiResponse;
 import com.kritim_mind.sms_project.dto.response.RecipientResponse;
-import com.kritim_mind.sms_project.service.MessageRecipientService;
+import com.kritim_mind.sms_project.service.Interface.MessageRecipientService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

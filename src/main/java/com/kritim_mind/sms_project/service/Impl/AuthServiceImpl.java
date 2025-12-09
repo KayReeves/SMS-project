@@ -41,6 +41,8 @@ public class AuthServiceImpl implements AuthService {
 
             return new LoginResponse(
                     admin.getUsername(),
+                    admin.getId(),
+                    admin.getEmail(),
                     token,
                     "Bearer"
             );

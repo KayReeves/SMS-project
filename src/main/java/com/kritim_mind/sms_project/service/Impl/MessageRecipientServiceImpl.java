@@ -1,9 +1,10 @@
-package com.kritim_mind.sms_project.service;
+package com.kritim_mind.sms_project.service.Impl;
 
 import com.kritim_mind.sms_project.dto.response.RecipientResponse;
 import com.kritim_mind.sms_project.model.MessageRecipient;
 import com.kritim_mind.sms_project.model.MessageStatus;
 import com.kritim_mind.sms_project.repository.MessageRecipientRepository;
+import com.kritim_mind.sms_project.service.Interface.MessageRecipientService;
 import com.kritim_mind.sms_project.utils.ResourceNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -19,10 +20,11 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class MessageRecipientService {
+public class MessageRecipientServiceImpl implements MessageRecipientService {
 
     private final MessageRecipientRepository recipientRepository;
 
+    @Override
     @Transactional
     public List<RecipientResponse> getRecipientsByMessageId(Long messageId) {
         List<MessageRecipient> recipients = recipientRepository.findByMessageId(messageId);
@@ -31,12 +33,14 @@ public class MessageRecipientService {
                 .collect(Collectors.toList());
     }
 
+    @Override
     @Transactional
     public Page<RecipientResponse> getRecipientsByMessageId(Long messageId, Pageable pageable) {
         Page<MessageRecipient> recipients = recipientRepository.findByMessageId(messageId, pageable);
         return recipients.map(this::mapToResponse);
     }
 
+    @Override
     @Transactional
     public RecipientResponse getRecipientById(Long id) {
         MessageRecipient recipient = recipientRepository.findById(id)
@@ -44,6 +48,7 @@ public class MessageRecipientService {
         return mapToResponse(recipient);
     }
 
+    @Override
     @Transactional
     public RecipientResponse updateRecipientStatus(Long id, MessageStatus status) {
         log.info("Updating recipient ID: {} to status: {}", id, status);
@@ -69,6 +74,7 @@ public class MessageRecipientService {
         return mapToResponse(recipient);
     }
 
+    @Override
     @Transactional
     public void deleteRecipient(Long id) {
         log.info("Deleting recipient ID: {}", id);
@@ -81,6 +87,9 @@ public class MessageRecipientService {
         log.info("Recipient deleted successfully");
     }
 
+    // ------------------------
+    // Mapping helper
+    // ------------------------
     private RecipientResponse mapToResponse(MessageRecipient recipient) {
         RecipientResponse response = new RecipientResponse();
         response.setId(recipient.getId());

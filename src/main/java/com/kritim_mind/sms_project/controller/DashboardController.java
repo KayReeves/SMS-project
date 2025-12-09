@@ -3,7 +3,7 @@ package com.kritim_mind.sms_project.controller;
 import com.kritim_mind.sms_project.dto.response.ApiResponse;
 import com.kritim_mind.sms_project.dto.response.DailyReportData;
 import com.kritim_mind.sms_project.dto.response.DashboardResponse;
-import com.kritim_mind.sms_project.service.DashboardService;
+import com.kritim_mind.sms_project.service.Interface.DashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;

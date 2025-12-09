@@ -4,7 +4,7 @@ import com.kritim_mind.sms_project.dto.request.AddContactToGroupRequest;
 import com.kritim_mind.sms_project.dto.request.GroupRequest;
 import com.kritim_mind.sms_project.dto.response.ApiResponse;
 import com.kritim_mind.sms_project.dto.response.GroupResponse;
-import com.kritim_mind.sms_project.service.GroupService;
+import com.kritim_mind.sms_project.service.Interface.GroupService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

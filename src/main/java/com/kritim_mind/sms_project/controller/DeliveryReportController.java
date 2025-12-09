@@ -3,7 +3,7 @@ package com.kritim_mind.sms_project.controller;
 import com.kritim_mind.sms_project.dto.request.DeliveryReportRequest;
 import com.kritim_mind.sms_project.dto.response.ApiResponse;
 import com.kritim_mind.sms_project.dto.response.DeliveryReportResponse;
-import com.kritim_mind.sms_project.service.DeliveryReportService;
+import com.kritim_mind.sms_project.service.Interface.DeliveryReportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

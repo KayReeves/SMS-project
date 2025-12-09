@@ -1,4 +1,4 @@
-package com.kritim_mind.sms_project.service;
+package com.kritim_mind.sms_project.service.Impl;
 
 import com.kritim_mind.sms_project.dto.response.DailyReportData;
 import com.kritim_mind.sms_project.dto.response.DashboardResponse;
@@ -7,6 +7,7 @@ import com.kritim_mind.sms_project.repository.AdminRepository;
 import com.kritim_mind.sms_project.repository.ContactRepository;
 import com.kritim_mind.sms_project.repository.GroupRepository;
 import com.kritim_mind.sms_project.repository.MessageRepository;
+import com.kritim_mind.sms_project.service.Interface.DashboardService;
 import com.kritim_mind.sms_project.utils.ResourceNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -24,13 +25,14 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class DashboardService {
+public class DashboardServiceImpl implements DashboardService {
 
     private final AdminRepository adminRepository;
     private final MessageRepository messageRepository;
     private final ContactRepository contactRepository;
     private final GroupRepository groupRepository;
 
+    @Override
     @Transactional
     public DashboardResponse getDashboardSummary(Long adminId) {
         log.info("Fetching dashboard summary for admin ID: {}", adminId);
@@ -63,6 +65,7 @@ public class DashboardService {
                 .build();
     }
 
+    @Override
     @Transactional
     public List<DailyReportData> getDailyReport(Long adminId, LocalDate startDate, LocalDate endDate) {
         log.info("Fetching daily report for admin ID: {} from {} to {}",
@@ -83,6 +86,7 @@ public class DashboardService {
         return reportData;
     }
 
+    @Override
     @Transactional
     public List<DailyReportData> getMonthlyReport(Long adminId, int year) {
         log.info("Fetching monthly report for admin ID: {} for year {}", adminId, year);
@@ -95,6 +99,7 @@ public class DashboardService {
             LocalDateTime end = yearMonth.atEndOfMonth().atTime(LocalTime.MAX);
 
             Long total = messageRepository.sumSmsPartsBySenderAndDateRange(adminId, start, end);
+
             monthlyData.add(new DailyReportData(
                     LocalDate.of(year, month, 1),
                     total != null ? total : 0L
@@ -104,4 +109,3 @@ public class DashboardService {
         return monthlyData;
     }
 }
-

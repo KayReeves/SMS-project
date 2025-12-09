@@ -1,9 +1,10 @@
-package com.kritim_mind.sms_project.service;
+package com.kritim_mind.sms_project.service.Impl;
 
 import com.kritim_mind.sms_project.model.Message;
 import com.kritim_mind.sms_project.model.MessageRecipient;
 import com.kritim_mind.sms_project.model.MessageStatus;
 import com.kritim_mind.sms_project.repository.MessageRecipientRepository;
+import com.kritim_mind.sms_project.service.Interface.SMSProviderService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,10 +16,11 @@ import java.time.LocalDateTime;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class SMSProviderService {
+public class SMSProviderServiceImpl implements SMSProviderService {
 
     private final MessageRecipientRepository recipientRepository;
 
+    @Override
     @Async
     @Transactional
     public void sendBulkSms(Message message) {
@@ -27,7 +29,6 @@ public class SMSProviderService {
 
         for (MessageRecipient recipient : message.getRecipients()) {
             try {
-                // Simulate SMS sending - replace with actual SMS provider API call
                 boolean sent = sendSms(recipient.getPhoneNo(), message.getContent());
 
                 if (sent) {
@@ -53,9 +54,8 @@ public class SMSProviderService {
         log.info("Bulk SMS sending completed for message ID: {}", message.getId());
     }
 
+    // Simulated SMS sending - replace with actual provider integration
     private boolean sendSms(String phoneNo, String content) {
-        // TODO: Implement actual SMS provider integration
-        // Example: Twilio, AWS SNS, Africa's Talking, etc.
         log.info("Sending SMS to {}: {}", phoneNo, content);
         return true; // Simulate success
     }

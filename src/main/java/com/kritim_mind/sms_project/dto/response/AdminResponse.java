@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 public class AdminResponse {
     private Long id;
     private String username;
+    private String email;
     private Integer totalSmsCredits;
     private Integer usedSmsCredits;
     private Integer remainingCredits;

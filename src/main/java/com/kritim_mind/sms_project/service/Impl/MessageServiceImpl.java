@@ -1,10 +1,12 @@
-package com.kritim_mind.sms_project.service;
+package com.kritim_mind.sms_project.service.Impl;
 
 import com.kritim_mind.sms_project.dto.request.MessageRequest;
 import com.kritim_mind.sms_project.dto.response.MessageResponse;
 import com.kritim_mind.sms_project.exception.InsufficientBalanceException;
 import com.kritim_mind.sms_project.model.*;
 import com.kritim_mind.sms_project.repository.*;
+import com.kritim_mind.sms_project.service.Interface.MessageService;
+import com.kritim_mind.sms_project.service.Interface.SMSProviderService;
 import com.kritim_mind.sms_project.utils.ResourceNotFoundException;
 import com.kritim_mind.sms_project.utils.SMSCalculator;
 import jakarta.transaction.Transactional;
@@ -23,7 +25,7 @@ import java.util.Set;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class MessageService {
+public class MessageServiceImpl implements MessageService {
 
     private final MessageRepository messageRepository;
     private final AdminRepository adminRepository;
@@ -32,6 +34,7 @@ public class MessageService {
     private final MessageRecipientRepository recipientRepository;
     private final SMSProviderService smsProviderService;
 
+    @Override
     @Transactional
     public Page<MessageResponse> getAllMessages(Long senderId, LocalDateTime from,
                                                 LocalDateTime to, Pageable pageable) {
@@ -39,6 +42,7 @@ public class MessageService {
         return messages.map(this::mapToResponse);
     }
 
+    @Override
     @Transactional
     public MessageResponse getMessageById(Long id) {
         Message message = messageRepository.findById(id)
@@ -46,22 +50,19 @@ public class MessageService {
         return mapToResponse(message);
     }
 
+    @Override
     @Transactional
     public MessageResponse createMessage(MessageRequest request) {
         log.info("Creating message from sender ID: {}", request.getSenderId());
 
-        // Validate sender
         Admin sender = adminRepository.findById(request.getSenderId())
                 .orElseThrow(() -> new ResourceNotFoundException("Admin not found"));
 
-        // Calculate SMS parts
         int smsParts = SMSCalculator.calculateSmsParts(request.getContent());
 
-        // Collect all recipients
         Set<String> phoneNumbers = new HashSet<>();
         Map<String, RecipientInfo> recipientInfoMap = new HashMap<>();
 
-        // Add direct phone numbers
         if (request.getRecipientNumbers() != null) {
             request.getRecipientNumbers().forEach(phone -> {
                 phoneNumbers.add(phone);
@@ -69,7 +70,6 @@ public class MessageService {
             });
         }
 
-        // Add contacts
         if (request.getRecipientContactIds() != null) {
             for (Long contactId : request.getRecipientContactIds()) {
                 Contact contact = contactRepository.findByIdAndIsDeleted(contactId, false)
@@ -80,7 +80,6 @@ public class MessageService {
             }
         }
 
-        // Add group members
         if (request.getRecipientGroupIds() != null) {
             for (Long groupId : request.getRecipientGroupIds()) {
                 Group group = groupRepository.findByIdAndIsDeleted(groupId, false)
@@ -96,7 +95,6 @@ public class MessageService {
             }
         }
 
-        // Check balance
         int totalSmsRequired = smsParts * phoneNumbers.size();
         if (sender.getRemainingCredits() < totalSmsRequired) {
             throw new InsufficientBalanceException(
@@ -104,7 +102,6 @@ public class MessageService {
                             totalSmsRequired, sender.getRemainingCredits()));
         }
 
-        // Create message
         Message message = Message.builder()
                 .sender(sender)
                 .content(request.getContent())
@@ -113,7 +110,6 @@ public class MessageService {
 
         message = messageRepository.save(message);
 
-        // Create recipients
         for (String phone : phoneNumbers) {
             RecipientInfo info = recipientInfoMap.get(phone);
             MessageRecipient recipient = MessageRecipient.builder()
@@ -131,11 +127,9 @@ public class MessageService {
 
         message = messageRepository.save(message);
 
-        // Deduct balance
         sender.setUsedSmsCredits(sender.getUsedSmsCredits() + totalSmsRequired);
         adminRepository.save(sender);
 
-        // Send SMS asynchronously
         smsProviderService.sendBulkSms(message);
 
         log.info("Message created with ID: {}, Recipients: {}, SMS Parts: {}",
@@ -144,6 +138,7 @@ public class MessageService {
         return mapToResponse(message);
     }
 
+    @Override
     @Transactional
     public MessageResponse updateMessage(Long id, String content) {
         log.info("Updating message ID: {}", id);
@@ -161,6 +156,7 @@ public class MessageService {
         return mapToResponse(message);
     }
 
+    @Override
     @Transactional
     public void deleteMessage(Long id) {
         log.info("Deleting message ID: {}", id);
@@ -173,6 +169,9 @@ public class MessageService {
         log.info("Message deleted successfully");
     }
 
+    // ------------------------
+    // Mapping helper
+    // ------------------------
     private MessageResponse mapToResponse(Message message) {
         MessageResponse response = new MessageResponse();
         response.setId(message.getId());
