@@ -1,12 +1,15 @@
 package com.kritim_mind.sms_project.dto.response;
 
-import lombok.Builder;
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
-@Builder
+@Getter
+@Setter
+@AllArgsConstructor
 public class LoginResponse {
+    private String username;
     private String token;
     private String type;
-    private AdminResponse admin;
+
 }

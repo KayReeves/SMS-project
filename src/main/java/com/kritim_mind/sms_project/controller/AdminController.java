@@ -1,15 +1,13 @@
 package com.kritim_mind.sms_project.controller;
 
-import com.kritim_mind.sms_project.dto.request.AdminCreateRequest;
 import com.kritim_mind.sms_project.dto.request.AdminUpdateRequest;
 import com.kritim_mind.sms_project.dto.request.BalanceTopUpRequest;
 import com.kritim_mind.sms_project.dto.request.BalanceUpdateRequest;
 import com.kritim_mind.sms_project.dto.response.AdminResponse;
 import com.kritim_mind.sms_project.dto.response.ApiResponse;
 import com.kritim_mind.sms_project.dto.response.BalanceResponse;
-import com.kritim_mind.sms_project.service.AdminService;
+import com.kritim_mind.sms_project.service.Interface.AdminService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,14 +18,6 @@ class AdminController {
 
     private final AdminService adminService;
 
-    @PostMapping("/create")
-    public ResponseEntity<ApiResponse<AdminResponse>> createAdmin(
-             @RequestBody AdminCreateRequest request) {
-        AdminResponse response = adminService.createAdmin(request);
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Admin created successfully", response));
-    }
 
     @GetMapping("/{admin_id}")
     public ResponseEntity<ApiResponse<AdminResponse>> getAdmin(

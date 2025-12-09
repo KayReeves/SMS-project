@@ -1,13 +1,9 @@
 package com.kritim_mind.sms_project.controller;
 
 import com.kritim_mind.sms_project.dto.request.LoginRequest;
-import com.kritim_mind.sms_project.dto.response.AdminResponse;
 import com.kritim_mind.sms_project.dto.response.ApiResponse;
 import com.kritim_mind.sms_project.dto.response.LoginResponse;
-import com.kritim_mind.sms_project.exception.UnauthorizedException;
-import com.kritim_mind.sms_project.model.Admin;
-import com.kritim_mind.sms_project.service.AdminService;
-import com.kritim_mind.sms_project.utils.PasswordUtil;
+import com.kritim_mind.sms_project.service.Interface.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,27 +17,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final AdminService adminService;
+    private final AuthService authService;
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
-        Admin admin = adminService.findByUsername(request.getUsername());
-
-        if (!PasswordUtil.verifyPassword(request.getPassword(), admin.getPasswordHash())) {
-            throw new UnauthorizedException("Invalid credentials");
-        }
-
-        // Create JWT token (simplified - in production use proper JWT library)
-        String token = "jwt-token-" + admin.getId(); // Replace with actual JWT generation
-
-        AdminResponse adminResponse = adminService.getAdmin(admin.getId());
-
-        LoginResponse response = LoginResponse.builder()
-                .token(token)
-                .type("Bearer")
-                .admin(adminResponse)
-                .build();
-
+        LoginResponse response = authService.login(request);
         return ResponseEntity.ok(ApiResponse.success("Login successful", response));
     }
 }

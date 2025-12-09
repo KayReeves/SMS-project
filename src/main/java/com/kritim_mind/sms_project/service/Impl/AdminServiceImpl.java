@@ -1,6 +1,5 @@
-package com.kritim_mind.sms_project.service;
+package com.kritim_mind.sms_project.service.Impl;
 
-import com.kritim_mind.sms_project.dto.request.AdminCreateRequest;
 import com.kritim_mind.sms_project.dto.request.AdminUpdateRequest;
 import com.kritim_mind.sms_project.dto.request.BalanceTopUpRequest;
 import com.kritim_mind.sms_project.dto.request.BalanceUpdateRequest;
@@ -9,44 +8,26 @@ import com.kritim_mind.sms_project.dto.response.BalanceResponse;
 import com.kritim_mind.sms_project.exception.InsufficientBalanceException;
 import com.kritim_mind.sms_project.model.Admin;
 import com.kritim_mind.sms_project.repository.AdminRepository;
+import com.kritim_mind.sms_project.service.Interface.AdminService;
 import com.kritim_mind.sms_project.utils.DuplicateResourceException;
-import com.kritim_mind.sms_project.utils.PasswordUtil;
 import com.kritim_mind.sms_project.utils.ResourceNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class AdminService {
+public class AdminServiceImpl implements AdminService {
+
     private final AdminRepository adminRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public AdminResponse createAdmin(AdminCreateRequest request) {
-        log.info("Creating admin with username: {}", request.getUsername());
-
-        if (adminRepository.existsByUsername(request.getUsername())) {
-            throw new DuplicateResourceException("Username already exists");
-        }
-
-        Admin admin = Admin.builder()
-                .username(request.getUsername())
-                .passwordHash(PasswordUtil.hashPassword(request.getPassword()))
-                .totalSmsCredits(0)
-                .usedSmsCredits(0)
-                .build();
-
-        admin = adminRepository.save(admin);
-        log.info("Admin created successfully with ID: {}", admin.getId());
-
-        return mapToResponse(admin);
-    }
-
-    @Transactional
+    @Override
     public AdminResponse updateAdmin(Long adminId, AdminUpdateRequest request) {
-        log.info("Updating admin with ID: {}", adminId);
 
         Admin admin = adminRepository.findById(adminId)
                 .orElseThrow(() -> new ResourceNotFoundException("Admin not found"));
@@ -58,16 +39,15 @@ public class AdminService {
             admin.setUsername(request.getUsername());
         }
 
-        if (request.getPassword() != null) {
-            admin.setPasswordHash(PasswordUtil.hashPassword(request.getPassword()));
+        if (request.getPassword() != null && !request.getPassword().isEmpty()) {
+            admin.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         }
 
         admin = adminRepository.save(admin);
-        log.info("Admin updated successfully");
-
         return mapToResponse(admin);
     }
 
+    @Override
     public AdminResponse getAdmin(Long adminId) {
         Admin admin = adminRepository.findById(adminId)
                 .orElseThrow(() -> new ResourceNotFoundException("Admin not found"));
@@ -75,6 +55,7 @@ public class AdminService {
     }
 
     @Transactional
+    @Override
     public BalanceResponse getBalance(Long adminId) {
         Admin admin = adminRepository.findById(adminId)
                 .orElseThrow(() -> new ResourceNotFoundException("Admin not found"));
@@ -87,6 +68,7 @@ public class AdminService {
     }
 
     @Transactional
+    @Override
     public BalanceResponse updateBalance(Long adminId, BalanceUpdateRequest request) {
         log.info("Updating balance for admin ID: {}, deducting {} SMS parts",
                 adminId, request.getSentSmsParts());
@@ -111,6 +93,7 @@ public class AdminService {
     }
 
     @Transactional
+    @Override
     public BalanceResponse topupBalance(Long adminId, BalanceTopUpRequest request) {
         log.info("Topping up balance for admin ID: {}, adding {} credits",
                 adminId, request.getAddCredits());
@@ -130,6 +113,7 @@ public class AdminService {
                 .build();
     }
 
+    @Override
     public Admin findByUsername(String username) {
         return adminRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("Admin not found"));

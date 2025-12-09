@@ -10,7 +10,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "groups", indexes = {
+@Table(name = "sms_groups", indexes = {
         @Index(name = "idx_group_deleted", columnList = "is_deleted")
 })
 @Getter
@@ -48,4 +48,4 @@ public class Group {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-    }
+}
