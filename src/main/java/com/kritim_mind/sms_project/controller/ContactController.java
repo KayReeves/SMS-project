@@ -32,7 +32,7 @@ public class ContactController {
         return ResponseEntity.ok(ApiResponse.success(contact));
     }
 
-    @PostMapping("/create")
+    @PostMapping("/add")
     public ResponseEntity<ApiResponse<ContactResponse>> createContact(
             @RequestBody ContactRequest request) {
         ContactResponse contact = contactService.createContact(request);
@@ -49,10 +49,18 @@ public class ContactController {
         return ResponseEntity.ok(ApiResponse.success("Contact updated successfully", contact));
     }
 
-    @DeleteMapping("/delete/{contact_id}")
-    public ResponseEntity<ApiResponse<Void>> deleteContact(
+    @PatchMapping("/suspend/{contact_id}")
+    public ResponseEntity<ApiResponse<Void>> suspendContact(
             @PathVariable("contact_id") Long contactId) {
-        contactService.deleteContact(contactId);
+        contactService.suspendContact(contactId);
+        return ResponseEntity.ok(ApiResponse.success("Contact suspended successfully", null));
+    }
+
+    @DeleteMapping("/delete/{contact_id}")
+    public ResponseEntity<ApiResponse<Void>> deleteContact(@PathVariable("contact_id") long id) {
+        contactService.deleteContact(id);
         return ResponseEntity.ok(ApiResponse.success("Contact deleted successfully", null));
     }
+
+
 }

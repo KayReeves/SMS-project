@@ -101,7 +101,7 @@ public class GroupServiceImpl implements GroupService {
         Group group = groupRepository.findByIdAndIsDeleted(groupId, false)
                 .orElseThrow(() -> new ResourceNotFoundException("Group not found"));
 
-        Contact contact = contactRepository.findByIdAndIsDeleted(contactId, false)
+        Contact contact = contactRepository.findById(contactId)
                 .orElseThrow(() -> new ResourceNotFoundException("Contact not found"));
 
         group.getContacts().add(contact);

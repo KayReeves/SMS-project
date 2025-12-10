@@ -26,7 +26,7 @@ public class GroupController {
         return ResponseEntity.ok(ApiResponse.success(groups));
     }
 
-    @GetMapping("/{group_id}")
+        @GetMapping("/{group_id}")
     public ResponseEntity<ApiResponse<GroupResponse>> getGroupById(
             @PathVariable("group_id") Long groupId) {
         GroupResponse group = groupService.getGroupById(groupId);

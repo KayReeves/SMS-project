@@ -54,7 +54,6 @@ public class ContactServiceImpl implements ContactService {
         Contact contact = Contact.builder()
                 .name(request.getName())
                 .phoneNo(request.getPhoneNo())
-                .isDeleted(false)
                 .build();
 
         contact = contactRepository.save(contact);
@@ -68,7 +67,7 @@ public class ContactServiceImpl implements ContactService {
     public ContactResponse updateContact(Long id, ContactRequest request) {
         log.info("Updating contact ID: {}", id);
 
-        Contact contact = contactRepository.findByIdAndIsDeleted(id, false)
+        Contact contact = contactRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Contact not found"));
 
         if (!contact.getPhoneNo().equals(request.getPhoneNo()) &&
@@ -87,16 +86,22 @@ public class ContactServiceImpl implements ContactService {
 
     @Override
     @Transactional
-    public void deleteContact(Long id) {
+    public void suspendContact(Long id) {
         log.info("Soft deleting contact ID: {}", id);
 
         Contact contact = contactRepository.findByIdAndIsDeleted(id, false)
                 .orElseThrow(() -> new ResourceNotFoundException("Contact not found"));
 
-        contact.setIsDeleted(true);
         contactRepository.save(contact);
 
-        log.info("Contact deleted successfully");
+        log.info("Contact suspended successfully");
+    }
+
+    @Override
+    public void deleteContact(Long id) {
+        Contact contact = contactRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Contact not found"));
+        contactRepository.deleteContact(contact.getId());
     }
 
     private ContactResponse mapToResponse(Contact contact) {

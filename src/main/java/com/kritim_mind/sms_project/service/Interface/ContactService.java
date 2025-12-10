@@ -10,5 +10,6 @@ public interface ContactService {
     ContactResponse getContactById(Long id);
     ContactResponse createContact(ContactRequest request);
     ContactResponse updateContact(Long id, ContactRequest request);
+    void suspendContact(Long id);
     void deleteContact(Long id);
 }

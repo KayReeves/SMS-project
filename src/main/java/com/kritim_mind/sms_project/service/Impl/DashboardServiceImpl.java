@@ -52,7 +52,6 @@ public class DashboardServiceImpl implements DashboardService {
         Long totalSmsLength = messageRepository.sumSmsPartsBySenderAndDateRange(
                 adminId, LocalDateTime.MIN, LocalDateTime.now());
 
-        long contactsCount = contactRepository.countActiveContacts();
         long groupsCount = groupRepository.countActiveGroups();
 
         return DashboardResponse.builder()
@@ -60,7 +59,6 @@ public class DashboardServiceImpl implements DashboardService {
                 .totalTransactions(totalTransactions != null ? totalTransactions : 0L)
                 .totalSmsLength(totalSmsLength != null ? totalSmsLength : 0L)
                 .remainingBalance(admin.getRemainingCredits())
-                .contactsCount(contactsCount)
                 .groupsCount(groupsCount)
                 .build();
     }
