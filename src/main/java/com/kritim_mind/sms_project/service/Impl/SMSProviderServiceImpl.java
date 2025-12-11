@@ -54,7 +54,7 @@ public class SMSProviderServiceImpl implements SMSProviderService {
         log.info("Bulk SMS sending completed for message ID: {}", message.getId());
     }
 
-    // Simulated SMS sending - replace with actual provider integration
+    // Simulated SMS sending - replace with actual provider integration twillo
     private boolean sendSms(String phoneNo, String content) {
         log.info("Sending SMS to {}: {}", phoneNo, content);
         return true; // Simulate success

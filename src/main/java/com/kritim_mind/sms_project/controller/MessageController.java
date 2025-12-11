@@ -40,7 +40,7 @@ public class MessageController {
         return ResponseEntity.ok(ApiResponse.success(message));
     }
 
-    @PostMapping
+    @PostMapping("/send")
     public ResponseEntity<ApiResponse<MessageResponse>> createMessage(
             @RequestBody MessageRequest request) {
         MessageResponse message = messageService.createMessage(request);

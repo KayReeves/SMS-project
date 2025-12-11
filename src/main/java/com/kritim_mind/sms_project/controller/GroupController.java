@@ -50,10 +50,10 @@ public class GroupController {
         return ResponseEntity.ok(ApiResponse.success("Group updated successfully", group));
     }
 
-    @DeleteMapping("/delete/{group_id}")
-    public ResponseEntity<ApiResponse<Void>> deleteGroup(
+    @DeleteMapping("/suspend/{group_id}")
+    public ResponseEntity<ApiResponse<Void>> suspendGroup(
             @PathVariable("group_id") Long groupId) {
-        groupService.deleteGroup(groupId);
+        groupService.suspendGroup(groupId);
         return ResponseEntity.ok(ApiResponse.success("Group deleted successfully", null));
     }
 
@@ -71,5 +71,11 @@ public class GroupController {
             @PathVariable("contact_id") Long contactId) {
         groupService.removeContactFromGroup(groupId, contactId);
         return ResponseEntity.ok(ApiResponse.success("Contact removed from group successfully", null));
+    }
+
+    @DeleteMapping("/delete/{group_id}")
+    public ResponseEntity<ApiResponse<Void>> deleteGroup(@PathVariable("group_id")  long id) {
+      groupService.deleteGroup(id);
+      return ResponseEntity.ok(ApiResponse.success("Group deleted successfully", null));
     }
 }

@@ -58,7 +58,6 @@ public class MessageServiceImpl implements MessageService {
         Admin sender = adminRepository.findById(request.getSenderId())
                 .orElseThrow(() -> new ResourceNotFoundException("Admin not found"));
 
-        int smsParts = SMSCalculator.calculateSmsParts(request.getContent());
 
         Set<String> phoneNumbers = new HashSet<>();
         Map<String, RecipientInfo> recipientInfoMap = new HashMap<>();
@@ -95,17 +94,11 @@ public class MessageServiceImpl implements MessageService {
             }
         }
 
-        int totalSmsRequired = smsParts * phoneNumbers.size();
-        if (sender.getRemainingCredits() < totalSmsRequired) {
-            throw new InsufficientBalanceException(
-                    String.format("Insufficient credits. Required: %d, Available: %d",
-                            totalSmsRequired, sender.getRemainingCredits()));
-        }
+
 
         Message message = Message.builder()
                 .sender(sender)
                 .content(request.getContent())
-                .totalSmsParts(totalSmsRequired)
                 .build();
 
         message = messageRepository.save(message);
@@ -127,13 +120,11 @@ public class MessageServiceImpl implements MessageService {
 
         message = messageRepository.save(message);
 
-        sender.setUsedSmsCredits(sender.getUsedSmsCredits() + totalSmsRequired);
+
         adminRepository.save(sender);
 
         smsProviderService.sendBulkSms(message);
 
-        log.info("Message created with ID: {}, Recipients: {}, SMS Parts: {}",
-                message.getId(), phoneNumbers.size(), totalSmsRequired);
 
         return mapToResponse(message);
     }

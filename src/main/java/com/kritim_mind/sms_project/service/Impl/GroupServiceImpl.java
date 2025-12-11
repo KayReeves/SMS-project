@@ -40,7 +40,7 @@ public class GroupServiceImpl implements GroupService {
     @Override
     @Transactional
     public GroupResponse getGroupById(Long id) {
-        Group group = groupRepository.findByIdAndIsDeleted(id, false)
+        Group group = groupRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Group not found"));
         return mapToResponse(group);
     }
@@ -81,7 +81,7 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     @Transactional
-    public void deleteGroup(Long id) {
+    public void suspendGroup(Long id) {
         log.info("Soft deleting group ID: {}", id);
 
         Group group = groupRepository.findByIdAndIsDeleted(id, false)
@@ -126,6 +126,15 @@ public class GroupServiceImpl implements GroupService {
         groupRepository.save(group);
 
         log.info("Contact removed from group successfully");
+    }
+
+    @Override
+    @Transactional
+    public void deleteGroup(Long groupId) {
+        log.info("Deleting group ID: {}", groupId);
+        Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
+
+        groupRepository.deleteGroup(group.getId());
     }
 
     private GroupResponse mapToResponse(Group group) {

@@ -14,6 +14,8 @@ public interface GroupService {
 
     GroupResponse updateGroup(Long id, GroupRequest request);
 
+    void suspendGroup(Long id);
+
     void deleteGroup(Long id);
 
     GroupResponse addContactToGroup(Long groupId, Long contactId);
