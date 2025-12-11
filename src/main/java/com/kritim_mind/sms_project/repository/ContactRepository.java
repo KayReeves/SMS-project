@@ -15,7 +15,11 @@ public interface ContactRepository extends JpaRepository<Contact, Long> {
 
     Optional<Contact> findByIdAndIsDeleted(Long id, Boolean isDeleted);
 
+    Optional<Contact> findByPhoneNo(String phoneNo);
+
     boolean existsByPhoneNo(String phoneNo);
+
+
 
     @Query("SELECT c FROM Contact c WHERE c.phoneNo = :phoneNo AND c.isDeleted = false")
     Optional<Contact> findActiveByPhoneNo(String phoneNo);

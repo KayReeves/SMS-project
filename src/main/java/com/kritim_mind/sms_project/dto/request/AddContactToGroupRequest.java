@@ -2,7 +2,9 @@ package com.kritim_mind.sms_project.dto.request;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class AddContactToGroupRequest {
-    private Long contactId;
+    private List<Long> contactIds;
 }

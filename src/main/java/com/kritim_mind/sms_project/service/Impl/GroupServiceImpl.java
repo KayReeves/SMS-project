@@ -13,7 +13,11 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -95,24 +99,6 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     @Transactional
-    public GroupResponse addContactToGroup(Long groupId, Long contactId) {
-        log.info("Adding contact {} to group {}", contactId, groupId);
-
-        Group group = groupRepository.findByIdAndIsDeleted(groupId, false)
-                .orElseThrow(() -> new ResourceNotFoundException("Group not found"));
-
-        Contact contact = contactRepository.findById(contactId)
-                .orElseThrow(() -> new ResourceNotFoundException("Contact not found"));
-
-        group.getContacts().add(contact);
-        group = groupRepository.save(group);
-
-        log.info("Contact added to group successfully");
-        return mapToResponse(group);
-    }
-
-    @Override
-    @Transactional
     public void removeContactFromGroup(Long groupId, Long contactId) {
         log.info("Removing contact {} from group {}", contactId, groupId);
 
@@ -130,11 +116,83 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     @Transactional
+    public GroupResponse addContactsToGroupFromFile(Long groupId, MultipartFile file) {
+        try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()));
+            String line;
+            List<Contact> contactsToAdd = new ArrayList<>();
+
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                if (line.isEmpty()) continue;
+
+                // CSV format: name,phoneNo
+                String[] parts = line.split(",");
+                if (parts.length != 2) continue;
+
+                String name = parts[0].trim();
+                String phoneNo = parts[1].trim();
+
+                // Use orElseGet to only create new Contact if it doesn't exist
+                Contact contact = contactRepository.findByPhoneNo(phoneNo)
+                        .orElseGet(() -> Contact.builder()
+                                .name(name)
+                                .phoneNo(phoneNo)
+                                .isDeleted(false)
+                                .build());
+
+                contactsToAdd.add(contact);
+            }
+
+            if (contactsToAdd.isEmpty()) {
+                throw new RuntimeException("No valid contacts found in file");
+            }
+
+            // Save all new contacts
+            contactsToAdd = contactRepository.saveAll(contactsToAdd);
+
+            // Extract IDs
+            List<Long> contactIds = contactsToAdd.stream()
+                    .map(Contact::getId)
+                    .toList();
+
+            // Add contacts to group
+            return addContactToGroup(groupId, contactIds);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to process file: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    @Transactional
     public void deleteGroup(Long groupId) {
         log.info("Deleting group ID: {}", groupId);
-        Group group = groupRepository.findById(groupId).orElseThrow(() -> new ResourceNotFoundException("Group not found"));
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new ResourceNotFoundException("Group not found"));
 
         groupRepository.deleteGroup(group.getId());
+    }
+
+    @Override
+    @Transactional
+    public GroupResponse addContactToGroup(Long groupId, List<Long> contactIds) {
+        log.info("Adding contacts {} to group {}", contactIds, groupId);
+
+        Group group = groupRepository.findByIdAndIsDeleted(groupId, false)
+                .orElseThrow(() -> new ResourceNotFoundException("Group not found"));
+
+        List<Contact> contacts = contactRepository.findAllById(contactIds);
+
+        if (contacts.isEmpty()) {
+            throw new ResourceNotFoundException("No valid contacts found");
+        }
+
+        group.getContacts().addAll(contacts);
+        group = groupRepository.save(group);
+
+        log.info("Contacts added to group successfully");
+        return mapToResponse(group);
     }
 
     private GroupResponse mapToResponse(Group group) {

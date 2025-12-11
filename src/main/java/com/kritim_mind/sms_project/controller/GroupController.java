@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -61,7 +62,7 @@ public class GroupController {
     public ResponseEntity<ApiResponse<GroupResponse>> addContactToGroup(
             @PathVariable("group_id") Long groupId,
             @RequestBody AddContactToGroupRequest request) {
-        GroupResponse group = groupService.addContactToGroup(groupId, request.getContactId());
+        GroupResponse group = groupService.addContactToGroup(groupId, request.getContactIds());
         return ResponseEntity.ok(ApiResponse.success("Contact added to group successfully", group));
     }
 
@@ -78,4 +79,14 @@ public class GroupController {
       groupService.deleteGroup(id);
       return ResponseEntity.ok(ApiResponse.success("Group deleted successfully", null));
     }
+
+    @PostMapping("/{group_id}/contacts/bulk")
+    public ResponseEntity<ApiResponse<GroupResponse>> addContactsToGroupBulk(
+            @PathVariable("group_id") Long groupId,
+            @RequestParam("file") MultipartFile file) {
+
+        GroupResponse group = groupService.addContactsToGroupFromFile(groupId, file);
+        return ResponseEntity.ok(ApiResponse.success("Contacts added in bulk successfully", group));
+    }
+
 }
