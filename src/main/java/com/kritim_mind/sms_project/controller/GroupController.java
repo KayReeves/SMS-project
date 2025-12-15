@@ -80,12 +80,12 @@ public class GroupController {
       return ResponseEntity.ok(ApiResponse.success("Group deleted successfully", null));
     }
 
-    @PostMapping("/{group_id}/contacts/bulk")
+    @PostMapping("/contacts/bulk")
     public ResponseEntity<ApiResponse<GroupResponse>> addContactsToGroupBulk(
-            @PathVariable("group_id") Long groupId,
+            @RequestBody GroupRequest groupRequest,
             @RequestParam("file") MultipartFile file) {
 
-        GroupResponse group = groupService.addContactsToGroupFromFile(groupId, file);
+        GroupResponse group = groupService.addContactsToGroupFromFile(file,groupRequest);
         return ResponseEntity.ok(ApiResponse.success("Contacts added in bulk successfully", group));
     }
 

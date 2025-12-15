@@ -23,5 +23,5 @@ public interface GroupService {
 
     void removeContactFromGroup(Long groupId, Long contactId);
 
-    GroupResponse addContactsToGroupFromFile(Long groupId, MultipartFile file);
+    GroupResponse addContactsToGroupFromFile(MultipartFile file,GroupRequest groupRequest);
 }

@@ -28,7 +28,7 @@ target/
 build/
 !**/src/main/**/build/
 !**/src/test/**/build/
-src/main/java/com/kritim_mind/sms_project/service/Impl/SMSProviderServiceImpl.java
+ src/main/java/com/kritim_mind/sms_project/service/Impl/SMSProviderServiceImpl.java
 
 
 ### VS Code ###

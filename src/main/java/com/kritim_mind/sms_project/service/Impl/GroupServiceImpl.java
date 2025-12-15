@@ -116,7 +116,7 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     @Transactional
-    public GroupResponse addContactsToGroupFromFile(Long groupId, MultipartFile file) {
+    public GroupResponse addContactsToGroupFromFile(MultipartFile file, GroupRequest groupRequest) {
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()));
             String line;
@@ -155,8 +155,8 @@ public class GroupServiceImpl implements GroupService {
             List<Long> contactIds = contactsToAdd.stream()
                     .map(Contact::getId)
                     .toList();
-
-            return addContactToGroup(groupId, contactIds);
+            GroupResponse groupResponse = createGroup(groupRequest);
+            return addContactToGroup(groupResponse.getId(), contactIds);
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to process file: " + e.getMessage(), e);
