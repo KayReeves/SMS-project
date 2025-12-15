@@ -22,4 +22,8 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
     @Transactional
     @Query("DELETE FROM Group g WHERE g.id = :groupId")
     void deleteGroup(@Param("groupId") long groupId);
+
+    @Query("SELECT g FROM Group g JOIN g.contacts c WHERE c.id = :contactId")
+    List<Group> findGroupsByContactId(@Param("contactId") Long contactId);
+
 }

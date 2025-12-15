@@ -27,9 +27,4 @@ public interface ContactRepository extends JpaRepository<Contact, Long> {
     @Query("SELECT COUNT(c) FROM Contact c WHERE c.isDeleted = false")
     long countActiveContacts();
 
-    @Modifying
-    @Transactional
-    @Query("DELETE FROM Contact c WHERE c.id = :contactId")
-    void deleteContact(@Param("contactId") long contactId);
-
 }

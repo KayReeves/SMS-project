@@ -3,7 +3,9 @@ package com.kritim_mind.sms_project.service.Impl;
 import com.kritim_mind.sms_project.dto.request.ContactRequest;
 import com.kritim_mind.sms_project.dto.response.ContactResponse;
 import com.kritim_mind.sms_project.model.Contact;
+import com.kritim_mind.sms_project.model.Group;
 import com.kritim_mind.sms_project.repository.ContactRepository;
+import com.kritim_mind.sms_project.repository.GroupRepository;
 import com.kritim_mind.sms_project.service.Interface.ContactService;
 import com.kritim_mind.sms_project.utils.DuplicateResourceException;
 import com.kritim_mind.sms_project.utils.ResourceNotFoundException;
@@ -21,6 +23,7 @@ import java.util.stream.Collectors;
 public class ContactServiceImpl implements ContactService {
 
     private final ContactRepository contactRepository;
+    private final GroupRepository groupRepository;
 
     @Override
     @Transactional
@@ -98,10 +101,19 @@ public class ContactServiceImpl implements ContactService {
     }
 
     @Override
+    @Transactional
     public void deleteContact(Long id) {
+
         Contact contact = contactRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Contact not found"));
-        contactRepository.deleteContact(contact.getId());
+
+        // Remove contact from all groups
+        List<Group> groups = groupRepository.findGroupsByContactId(id);
+        for (Group group : groups) {
+            group.getContacts().remove(contact);
+        }
+
+        contactRepository.delete(contact);
     }
 
     private ContactResponse mapToResponse(Contact contact) {

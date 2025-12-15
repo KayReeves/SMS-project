@@ -10,6 +10,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import com.twilio.Twilio;
+import com.twilio.rest.api.v2010.account.MessageCreator;
+import com.twilio.type.PhoneNumber;
 
 import java.time.LocalDateTime;
 
@@ -20,8 +23,16 @@ public class SMSProviderServiceImpl implements SMSProviderService {
 
     private final MessageRecipientRepository recipientRepository;
 
+
+    private static final String ACCOUNT_SID = "AC77b80b6a61ef58639521d4a4c8fa491d";
+    private static final String AUTH_TOKEN = "14a5ca4430c70fbf8c65c9a9a75c65b2";
+    private static final String FROM_NUMBER = "+18554199262";
+
+    static {
+        Twilio.init(ACCOUNT_SID, AUTH_TOKEN);
+    }
+
     @Override
-    @Async
     @Transactional
     public void sendBulkSms(Message message) {
         log.info("Sending SMS to {} recipients for message ID: {}",
@@ -54,9 +65,21 @@ public class SMSProviderServiceImpl implements SMSProviderService {
         log.info("Bulk SMS sending completed for message ID: {}", message.getId());
     }
 
-    // Simulated SMS sending - replace with actual provider integration twillo
-    private boolean sendSms(String phoneNo, String content) {
-        log.info("Sending SMS to {}: {}", phoneNo, content);
-        return true; // Simulate success
+
+    private boolean sendSms(String toNumber, String content) {
+        try {
+            com.twilio.rest.api.v2010.account.Message message = com.twilio.rest.api.v2010.account.Message.creator(
+                    new PhoneNumber(toNumber),
+                    new PhoneNumber(FROM_NUMBER),
+                    content
+            ).create();
+
+            log.info("Twilio SID {} - SMS sent to {}", message.getSid(), toNumber);
+            return true;
+
+        } catch (Exception e) {
+            log.error("Twilio SMS error to {}: {}", toNumber, e.getMessage());
+            return false;
+        }
     }
 }

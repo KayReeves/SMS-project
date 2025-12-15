@@ -133,7 +133,7 @@ public class GroupServiceImpl implements GroupService {
                 String name = parts[0].trim();
                 String phoneNo = parts[1].trim();
 
-                // Use orElseGet to only create new Contact if it doesn't exist
+
                 Contact contact = contactRepository.findByPhoneNo(phoneNo)
                         .orElseGet(() -> Contact.builder()
                                 .name(name)
@@ -145,18 +145,17 @@ public class GroupServiceImpl implements GroupService {
             }
 
             if (contactsToAdd.isEmpty()) {
-                throw new RuntimeException("No valid contacts found in file");
+                throw new ResourceNotFoundException("No valid contacts found in file");
             }
 
-            // Save all new contacts
+
             contactsToAdd = contactRepository.saveAll(contactsToAdd);
 
-            // Extract IDs
+
             List<Long> contactIds = contactsToAdd.stream()
                     .map(Contact::getId)
                     .toList();
 
-            // Add contacts to group
             return addContactToGroup(groupId, contactIds);
 
         } catch (Exception e) {
@@ -189,6 +188,7 @@ public class GroupServiceImpl implements GroupService {
         }
 
         group.getContacts().addAll(contacts);
+
         group = groupRepository.save(group);
 
         log.info("Contacts added to group successfully");
