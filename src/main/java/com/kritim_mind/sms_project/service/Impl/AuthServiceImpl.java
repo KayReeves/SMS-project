@@ -26,16 +26,19 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public LoginResponse login(LoginRequest request) {
+
         try {
+            Admin admin = adminRepository
+                    .findByUsernameOrEmail(request.getLogin())
+                    .orElseThrow(() ->
+                            new UnauthorizedException("Incorrect username/email or password"));
+
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
-                            request.getUsername(),
+                            admin.getUsername(),
                             request.getPassword()
                     )
             );
-
-            Admin admin = adminRepository.findByUsername(request.getUsername())
-                    .orElseThrow(() -> new ResourceNotFoundException("Admin does not exist"));
 
             String token = jwtTokenProvider.generateToken(authentication, admin.getId());
 
@@ -47,8 +50,8 @@ public class AuthServiceImpl implements AuthService {
                     "Bearer"
             );
 
-        } catch (BadCredentialsException | UsernameNotFoundException e) {
-            throw new UnauthorizedException("Incorrect username or password");
+        } catch (BadCredentialsException e) {
+            throw new UnauthorizedException("Incorrect username/email or password");
 
         } catch (Exception e) {
             throw new RuntimeException("Login failed: " + e.getMessage());
