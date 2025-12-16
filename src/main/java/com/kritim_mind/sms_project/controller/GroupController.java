@@ -7,6 +7,7 @@ import com.kritim_mind.sms_project.dto.response.GroupResponse;
 import com.kritim_mind.sms_project.service.Interface.GroupService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -80,13 +81,22 @@ public class GroupController {
       return ResponseEntity.ok(ApiResponse.success("Group deleted successfully", null));
     }
 
-    @PostMapping("/contacts/bulk")
+    @PostMapping(
+            value = "/contacts/bulk",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
     public ResponseEntity<ApiResponse<GroupResponse>> addContactsToGroupBulk(
-            @RequestBody GroupRequest groupRequest,
-            @RequestParam("file") MultipartFile file) {
+            @RequestPart("groupRequest") GroupRequest groupRequest,
+            @RequestPart("file") MultipartFile file
+    ) {
+        GroupResponse group =
+                groupService.addContactsToGroupFromFile(file, groupRequest);
 
-        GroupResponse group = groupService.addContactsToGroupFromFile(file,groupRequest);
-        return ResponseEntity.ok(ApiResponse.success("Contacts added in bulk successfully", group));
+        return ResponseEntity.ok(
+                ApiResponse.success("Contacts added in bulk successfully", group)
+        );
     }
+
+
 
 }
