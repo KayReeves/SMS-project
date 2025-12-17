@@ -22,7 +22,11 @@ public class DataInitializer {
             String defaultPassword = "admin123";
             String defaultEmail = "admin@gmail.com";
 
-            if (adminRepository.findByUsername(defaultUsername).isEmpty()) {
+            if (adminRepository.count() > 0) {
+                System.out.println("Skipping creating admin with data initializer.");
+                return;
+            }
+
                 Admin admin = new Admin();
                 admin.setUsername(defaultUsername);
                 admin.setPasswordHash(passwordEncoder.encode(defaultPassword));
@@ -32,7 +36,6 @@ public class DataInitializer {
 
                 adminRepository.save(admin);
                 System.out.println("Default admin created: " + defaultUsername);
-            }
         };
     }
 }

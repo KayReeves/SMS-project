@@ -6,6 +6,7 @@ import com.kritim_mind.sms_project.dto.request.BalanceUpdateRequest;
 import com.kritim_mind.sms_project.dto.response.AdminResponse;
 import com.kritim_mind.sms_project.dto.response.BalanceResponse;
 import com.kritim_mind.sms_project.exception.InsufficientBalanceException;
+import com.kritim_mind.sms_project.exception.UnauthorizedException;
 import com.kritim_mind.sms_project.model.Admin;
 import com.kritim_mind.sms_project.repository.AdminRepository;
 import com.kritim_mind.sms_project.service.Interface.AdminService;
@@ -39,8 +40,26 @@ public class AdminServiceImpl implements AdminService {
             admin.setUsername(request.getUsername());
         }
 
-        if (request.getPassword() != null && !request.getPassword().isEmpty()) {
-            admin.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        if (request.getEmail() != null &&
+                !request.getEmail().equals(admin.getEmail())) {
+
+            if (adminRepository.findByEmail(request.getEmail()).isPresent()) {
+                throw new DuplicateResourceException("Email already exists");
+            }
+            admin.setEmail(request.getEmail());
+        }
+
+        if (request.getNewPassword() != null && !request.getNewPassword().isBlank()) {
+
+            if (request.getCurrentPassword() == null || request.getCurrentPassword().isBlank()) {
+                throw new UnauthorizedException("Current password is required");
+            }
+
+            if (!passwordEncoder.matches(request.getCurrentPassword(), admin.getPasswordHash())) {
+                throw new UnauthorizedException("Current password is incorrect");
+            }
+
+            admin.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         }
 
         admin = adminRepository.save(admin);
@@ -123,6 +142,7 @@ public class AdminServiceImpl implements AdminService {
         AdminResponse response = new AdminResponse();
         response.setId(admin.getId());
         response.setUsername(admin.getUsername());
+        response.setEmail(admin.getEmail());
         response.setTotalSmsCredits(admin.getTotalSmsCredits());
         response.setUsedSmsCredits(admin.getUsedSmsCredits());
         response.setRemainingCredits(admin.getRemainingCredits());
