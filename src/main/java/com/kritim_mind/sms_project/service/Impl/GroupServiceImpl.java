@@ -117,6 +117,21 @@ public class GroupServiceImpl implements GroupService {
     @Override
     @Transactional
     public GroupResponse addContactsToGroupFromFile(MultipartFile file, GroupRequest groupRequest) {
+
+        String originalFileName = file.getOriginalFilename();
+        String contentType = file.getContentType();
+        long fileSizeBytes = file.getSize();
+
+        log.info("Uploaded file: name={}, type={}, size={} bytes",
+                originalFileName, contentType, fileSizeBytes);
+
+        if (fileSizeBytes == 0) {
+            throw new IllegalArgumentException("Uploaded file is empty");
+        }
+        if (contentType == null || !contentType.equalsIgnoreCase("text/csv")) {
+            throw new IllegalArgumentException("Only CSV files are allowed");
+        }
+
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()));
             String line;
@@ -156,7 +171,15 @@ public class GroupServiceImpl implements GroupService {
                     .map(Contact::getId)
                     .toList();
             GroupResponse groupResponse = createGroup(groupRequest);
-            return addContactToGroup(groupResponse.getId(), contactIds);
+            GroupResponse response = addContactToGroup(groupResponse.getId(), contactIds);
+            System.out.println(originalFileName);
+            System.out.println(fileSizeBytes);
+            System.out.println(contentType);
+            response.setOriginalFileName(originalFileName);
+            response.setContentType(contentType);
+            response.setFileSizeBytes(fileSizeBytes);
+
+            return response;
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to process file: " + e.getMessage(), e);

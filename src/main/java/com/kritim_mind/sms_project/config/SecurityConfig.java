@@ -37,6 +37,9 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/auth/login",
 
+                                //khalti path
+                                "/api/khalti/**",
+
                                 // Swagger paths
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
