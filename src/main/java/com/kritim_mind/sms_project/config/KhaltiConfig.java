@@ -1,16 +1,15 @@
 package com.kritim_mind.sms_project.config;
 
-import lombok.Getter;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.Data;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+@Data
 @Configuration
-@Getter
+@ConfigurationProperties(prefix = "khalti")
 public class KhaltiConfig {
 
-    @Value("${khalti.base-url}")
-    private String baseUrl;
-
-    @Value("${khalti.secret-key}")
     private String secretKey;
+    private String publicKey;
+    private String baseUrl;
 }

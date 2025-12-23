@@ -28,6 +28,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
+
+
+        String path = request.getServletPath();
+
+        // Skip JWT filter for public endpoints
+        if (path.startsWith("/api/khalti") || path.startsWith("/api/auth/login")
+                || path.startsWith("/swagger") || path.startsWith("/v3/api-docs")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String jwt = null;
         String username = null;
 
