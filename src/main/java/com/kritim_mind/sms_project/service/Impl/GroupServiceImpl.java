@@ -18,7 +18,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -116,7 +118,10 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     @Transactional
-    public GroupResponse addContactsToGroupFromFile(MultipartFile file, GroupRequest groupRequest) {
+    public GroupResponse addContactsToGroupFromFile(
+            MultipartFile file,
+            GroupRequest groupRequest
+    ) {
 
         String originalFileName = file.getOriginalFilename();
         String contentType = file.getContentType();
@@ -128,53 +133,74 @@ public class GroupServiceImpl implements GroupService {
         if (fileSizeBytes == 0) {
             throw new IllegalArgumentException("Uploaded file is empty");
         }
+
         if (contentType == null || !contentType.equalsIgnoreCase("text/csv")) {
             throw new IllegalArgumentException("Only CSV files are allowed");
         }
 
-        try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()));
+        try (
+                BufferedReader reader =
+                        new BufferedReader(new InputStreamReader(file.getInputStream()))
+        ) {
+
+            // 🔑 Key = phoneNo → auto-deduplication
+            Map<String, Contact> uniqueContacts = new HashMap<>();
+
             String line;
-            List<Contact> contactsToAdd = new ArrayList<>();
+            boolean headerSkipped = false;
 
             while ((line = reader.readLine()) != null) {
                 line = line.trim();
                 if (line.isEmpty()) continue;
 
-                // CSV format: name,phoneNo
+                // Skip CSV header once
+                if (!headerSkipped && line.toLowerCase().contains("phone")) {
+                    headerSkipped = true;
+                    continue;
+                }
+                headerSkipped = true;
+
+                // Expected format: name,phoneNo
                 String[] parts = line.split(",");
                 if (parts.length != 2) continue;
 
                 String name = parts[0].trim();
                 String phoneNo = parts[1].trim();
 
+                if (phoneNo.isBlank()) continue;
 
-                Contact contact = contactRepository.findByPhoneNo(phoneNo)
-                        .orElseGet(() -> Contact.builder()
-                                .name(name)
-                                .phoneNo(phoneNo)
-                                .isDeleted(false)
-                                .build());
-
-                contactsToAdd.add(contact);
+                // ✅ Merge logic (CSV + DB safe)
+                uniqueContacts.computeIfAbsent(phoneNo, pn ->
+                        contactRepository.findByPhoneNo(pn)
+                                .orElse(
+                                        Contact.builder()
+                                                .name(name)
+                                                .phoneNo(pn)
+                                                .isDeleted(false)
+                                                .build()
+                                )
+                );
             }
 
-            if (contactsToAdd.isEmpty()) {
+            if (uniqueContacts.isEmpty()) {
                 throw new ResourceNotFoundException("No valid contacts found in file");
             }
 
+            // ✅ Save only unique contacts
+            List<Contact> savedContacts =
+                    contactRepository.saveAll(uniqueContacts.values());
 
-            contactsToAdd = contactRepository.saveAll(contactsToAdd);
-
-
-            List<Long> contactIds = contactsToAdd.stream()
+            // Extract IDs
+            List<Long> contactIds = savedContacts.stream()
                     .map(Contact::getId)
                     .toList();
+
+            // Create group and attach contacts
             GroupResponse groupResponse = createGroup(groupRequest);
-            GroupResponse response = addContactToGroup(groupResponse.getId(), contactIds);
-            System.out.println(originalFileName);
-            System.out.println(fileSizeBytes);
-            System.out.println(contentType);
+            GroupResponse response =
+                    addContactToGroup(groupResponse.getId(), contactIds);
+
+            // Metadata
             response.setOriginalFileName(originalFileName);
             response.setContentType(contentType);
             response.setFileSizeBytes(fileSizeBytes);
@@ -182,9 +208,12 @@ public class GroupServiceImpl implements GroupService {
             return response;
 
         } catch (Exception e) {
-            throw new RuntimeException("Failed to process file: " + e.getMessage(), e);
+            throw new RuntimeException(
+                    "Failed to process file: " + e.getMessage(), e
+            );
         }
     }
+
 
     @Override
     @Transactional
