@@ -7,7 +7,6 @@ import com.kritim_mind.sms_project.model.Admin;
 import com.kritim_mind.sms_project.repository.AdminRepository;
 import com.kritim_mind.sms_project.service.Interface.AuthService;
 import com.kritim_mind.sms_project.utils.JwtTokenProvider;
-import com.kritim_mind.sms_project.utils.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;

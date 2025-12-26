@@ -2,13 +2,13 @@ package com.kritim_mind.sms_project.service.Impl;
 
 import com.kritim_mind.sms_project.dto.response.DailyReportData;
 import com.kritim_mind.sms_project.dto.response.DashboardResponse;
+import com.kritim_mind.sms_project.exception.ResourceNotFoundException;
 import com.kritim_mind.sms_project.model.Admin;
 import com.kritim_mind.sms_project.repository.AdminRepository;
 import com.kritim_mind.sms_project.repository.ContactRepository;
 import com.kritim_mind.sms_project.repository.GroupRepository;
 import com.kritim_mind.sms_project.repository.MessageRepository;
 import com.kritim_mind.sms_project.service.Interface.DashboardService;
-import com.kritim_mind.sms_project.utils.ResourceNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

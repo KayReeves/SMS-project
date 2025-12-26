@@ -2,13 +2,13 @@ package com.kritim_mind.sms_project.service.Impl;
 
 import com.kritim_mind.sms_project.dto.request.ContactRequest;
 import com.kritim_mind.sms_project.dto.response.ContactResponse;
+import com.kritim_mind.sms_project.exception.ResourceNotFoundException;
 import com.kritim_mind.sms_project.model.Contact;
 import com.kritim_mind.sms_project.model.Group;
 import com.kritim_mind.sms_project.repository.ContactRepository;
 import com.kritim_mind.sms_project.repository.GroupRepository;
 import com.kritim_mind.sms_project.service.Interface.ContactService;
 import com.kritim_mind.sms_project.utils.DuplicateResourceException;
-import com.kritim_mind.sms_project.utils.ResourceNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
