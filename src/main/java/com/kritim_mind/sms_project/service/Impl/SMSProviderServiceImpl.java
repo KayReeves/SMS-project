@@ -76,7 +76,6 @@ public class SMSProviderServiceImpl implements SMSProviderService {
     }
 
 
-
     private boolean sendSms(String toNumber, String content) {
         try {
             com.twilio.rest.api.v2010.account.Message message = com.twilio.rest.api.v2010.account.Message.creator(
