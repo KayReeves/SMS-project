@@ -48,48 +48,7 @@ public class MessageRecipientServiceImpl implements MessageRecipientService {
         return mapToResponse(recipient);
     }
 
-    @Override
-    @Transactional
-    public RecipientResponse updateRecipientStatus(Long id, MessageStatus status) {
-        log.info("Updating recipient ID: {} to status: {}", id, status);
-
-        MessageRecipient recipient = recipientRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Recipient not found"));
-
-        recipient.setStatus(status);
-
-        LocalDateTime now = LocalDateTime.now();
-        switch (status) {
-            case SENT -> recipient.setSentAt(now);
-            case DELIVERED -> {
-                recipient.setDeliveredAt(now);
-                if (recipient.getSentAt() == null) recipient.setSentAt(now);
-            }
-            case FAILED -> recipient.setFailedAt(now);
-        }
-
-        recipient = recipientRepository.save(recipient);
-        log.info("Recipient status updated successfully");
-
-        return mapToResponse(recipient);
-    }
-
-    @Override
-    @Transactional
-    public void deleteRecipient(Long id) {
-        log.info("Deleting recipient ID: {}", id);
-
-        if (!recipientRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Recipient not found");
-        }
-
-        recipientRepository.deleteById(id);
-        log.info("Recipient deleted successfully");
-    }
-
-    // ------------------------
     // Mapping helper
-    // ------------------------
     private RecipientResponse mapToResponse(MessageRecipient recipient) {
         RecipientResponse response = new RecipientResponse();
         response.setId(recipient.getId());

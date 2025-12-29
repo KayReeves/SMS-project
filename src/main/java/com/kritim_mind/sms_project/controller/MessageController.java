@@ -49,18 +49,4 @@ public class MessageController {
                 .body(ApiResponse.success("Message sent successfully", message));
     }
 
-    @PutMapping("/{message_id}")
-    public ResponseEntity<ApiResponse<MessageResponse>> updateMessage(
-            @PathVariable("message_id") Long messageId,
-            @RequestParam String content) {
-        MessageResponse message = messageService.updateMessage(messageId, content);
-        return ResponseEntity.ok(ApiResponse.success("Message updated successfully", message));
-    }
-
-    @DeleteMapping("/{message_id}")
-    public ResponseEntity<ApiResponse<Void>> deleteMessage(
-            @PathVariable("message_id") Long messageId) {
-        messageService.deleteMessage(messageId);
-        return ResponseEntity.ok(ApiResponse.success("Message deleted successfully", null));
-    }
 }

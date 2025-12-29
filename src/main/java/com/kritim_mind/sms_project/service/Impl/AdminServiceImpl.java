@@ -1,11 +1,7 @@
 package com.kritim_mind.sms_project.service.Impl;
 
 import com.kritim_mind.sms_project.dto.request.AdminUpdateRequest;
-import com.kritim_mind.sms_project.dto.request.BalanceTopUpRequest;
-import com.kritim_mind.sms_project.dto.request.BalanceUpdateRequest;
 import com.kritim_mind.sms_project.dto.response.AdminResponse;
-import com.kritim_mind.sms_project.dto.response.BalanceResponse;
-import com.kritim_mind.sms_project.exception.InsufficientBalanceException;
 import com.kritim_mind.sms_project.exception.ResourceNotFoundException;
 import com.kritim_mind.sms_project.exception.UnauthorizedException;
 import com.kritim_mind.sms_project.model.Admin;
@@ -73,70 +69,6 @@ public class AdminServiceImpl implements AdminService {
         return mapToResponse(admin);
     }
 
-    @Transactional
-    @Override
-    public BalanceResponse getBalance(Long adminId) {
-        Admin admin = adminRepository.findById(adminId)
-                .orElseThrow(() -> new ResourceNotFoundException("Admin not found"));
-
-        return BalanceResponse.builder()
-                .totalCredits(admin.getTotalSmsCredits())
-                .usedCredits(admin.getUsedSmsCredits())
-                .remainingCredits(admin.getRemainingCredits())
-                .build();
-    }
-
-    @Transactional
-    @Override
-    public BalanceResponse updateBalance(Long adminId, BalanceUpdateRequest request) {
-        log.info("Updating balance for admin ID: {}, deducting {} SMS parts",
-                adminId, request.getSentSmsParts());
-
-        Admin admin = adminRepository.findById(adminId)
-                .orElseThrow(() -> new ResourceNotFoundException("Admin not found"));
-
-        if (admin.getRemainingCredits() < request.getSentSmsParts()) {
-            throw new InsufficientBalanceException("Insufficient SMS credits");
-        }
-
-        admin.setUsedSmsCredits(admin.getUsedSmsCredits() + request.getSentSmsParts());
-        adminRepository.save(admin);
-
-        log.info("Balance updated successfully. Remaining: {}", admin.getRemainingCredits());
-
-        return BalanceResponse.builder()
-                .totalCredits(admin.getTotalSmsCredits())
-                .usedCredits(admin.getUsedSmsCredits())
-                .remainingCredits(admin.getRemainingCredits())
-                .build();
-    }
-
-    @Transactional
-    @Override
-    public BalanceResponse topupBalance(Long adminId, BalanceTopUpRequest request) {
-        log.info("Topping up balance for admin ID: {}, adding {} credits",
-                adminId, request.getAddCredits());
-
-        Admin admin = adminRepository.findById(adminId)
-                .orElseThrow(() -> new ResourceNotFoundException("Admin not found"));
-
-        admin.setTotalSmsCredits(admin.getTotalSmsCredits() + request.getAddCredits());
-        adminRepository.save(admin);
-
-        log.info("Balance topped up successfully. New total: {}", admin.getTotalSmsCredits());
-
-        return BalanceResponse.builder()
-                .totalCredits(admin.getTotalSmsCredits())
-                .usedCredits(admin.getUsedSmsCredits())
-                .remainingCredits(admin.getRemainingCredits())
-                .build();
-    }
-
-    @Override
-    public Admin findByUsername(String username) {
-        return adminRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("Admin not found"));
-    }
 
     private AdminResponse mapToResponse(Admin admin) {
         AdminResponse response = new AdminResponse();

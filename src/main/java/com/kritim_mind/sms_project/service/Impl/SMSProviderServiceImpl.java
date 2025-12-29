@@ -40,7 +40,10 @@ public class SMSProviderServiceImpl implements SMSProviderService {
 
         for (MessageRecipient recipient : message.getRecipients()) {
             try {
-                boolean sent = sendSms(recipient.getPhoneNo(), message.getContent());
+                String personalizedContent =
+                        personalizeContent(message.getContent(), recipient);
+
+                boolean sent = sendSms(recipient.getPhoneNo(), personalizedContent);
 
                 if (sent) {
                     recipient.setStatus(MessageStatus.SENT);
@@ -64,6 +67,14 @@ public class SMSProviderServiceImpl implements SMSProviderService {
 
         log.info("Bulk SMS sending completed for message ID: {}", message.getId());
     }
+
+    private String personalizeContent(String template, MessageRecipient recipient) {
+        if (template == null) return "";
+
+        return template
+                .replace("{name}", recipient.getContact().getName() != null ? recipient.getContact().getName() : "");
+    }
+
 
 
     private boolean sendSms(String toNumber, String content) {

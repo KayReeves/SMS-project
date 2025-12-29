@@ -42,18 +42,4 @@ public class MessageRecipientController {
         return ResponseEntity.ok(ApiResponse.success(recipient));
     }
 
-    @PutMapping("/update/message_recipients/{recipient_id}")
-    public ResponseEntity<ApiResponse<RecipientResponse>> updateRecipientStatus(
-            @PathVariable("recipient_id") Long recipientId,
-            @RequestBody RecipientStatusUpdateRequest request) {
-        RecipientResponse recipient = recipientService.updateRecipientStatus(recipientId, request.getStatus());
-        return ResponseEntity.ok(ApiResponse.success("Recipient status updated successfully", recipient));
-    }
-
-    @DeleteMapping("/delete/message_recipients/{recipient_id}")
-    public ResponseEntity<ApiResponse<Void>> deleteRecipient(
-            @PathVariable("recipient_id") Long recipientId) {
-        recipientService.deleteRecipient(recipientId);
-        return ResponseEntity.ok(ApiResponse.success("Recipient deleted successfully", null));
-    }
 }

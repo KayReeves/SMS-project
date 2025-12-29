@@ -129,40 +129,8 @@ public class MessageServiceImpl implements MessageService {
         return mapToResponse(message);
     }
 
-    @Override
-    @Transactional
-    public MessageResponse updateMessage(Long id, String content) {
-        log.info("Updating message ID: {}", id);
 
-        Message message = messageRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Message not found"));
-
-        message.setContent(content);
-        message.setTotalSmsParts(SMSCalculator.calculateSmsParts(content) *
-                message.getRecipients().size());
-
-        message = messageRepository.save(message);
-        log.info("Message updated successfully");
-
-        return mapToResponse(message);
-    }
-
-    @Override
-    @Transactional
-    public void deleteMessage(Long id) {
-        log.info("Deleting message ID: {}", id);
-
-        if (!messageRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Message not found");
-        }
-
-        messageRepository.deleteById(id);
-        log.info("Message deleted successfully");
-    }
-
-    // ------------------------
     // Mapping helper
-    // ------------------------
     private MessageResponse mapToResponse(Message message) {
         MessageResponse response = new MessageResponse();
         response.setId(message.getId());

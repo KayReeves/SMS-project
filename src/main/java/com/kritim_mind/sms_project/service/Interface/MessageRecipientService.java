@@ -14,7 +14,4 @@ public interface MessageRecipientService {
 
     RecipientResponse getRecipientById(Long id);
 
-    RecipientResponse updateRecipientStatus(Long id, MessageStatus status);
-
-    void deleteRecipient(Long id);
 }

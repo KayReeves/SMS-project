@@ -13,11 +13,4 @@ public interface AdminService {
 
     AdminResponse getAdmin(Long adminId);
 
-    BalanceResponse getBalance(Long adminId);
-
-    BalanceResponse updateBalance(Long adminId, BalanceUpdateRequest request);
-
-    BalanceResponse topupBalance(Long adminId, BalanceTopUpRequest request);
-
-    Admin findByUsername(String username);
 }
