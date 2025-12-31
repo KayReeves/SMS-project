@@ -1,7 +1,7 @@
 package com.kritim_mind.sms_project.service;
 
 import com.kritim_mind.sms_project.config.KhaltiConfig;
-import com.kritim_mind.sms_project.dto.request.KhaltiInitiateRequest;
+import com.kritim_mind.sms_project.dto.request.KhaltiTopupRequest;
 import com.kritim_mind.sms_project.dto.request.KhaltiVerifyRequest;
 import com.kritim_mind.sms_project.dto.response.KhaltiInitiateResponse;
 import com.kritim_mind.sms_project.model.KhaltiPayment;
@@ -29,8 +29,7 @@ public class KhaltiService {
         this.repository = repository;
     }
 
-
-    public KhaltiInitiateResponse initiatePayment(KhaltiInitiateRequest request) {
+    public KhaltiInitiateResponse initiatePayment(KhaltiTopupRequest request) {
 
         String url = khaltiConfig.getBaseUrl() + "epayment/initiate/";
 
@@ -38,39 +37,64 @@ public class KhaltiService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("Authorization", "Key " + khaltiConfig.getSecretKey());
 
-        HttpEntity<KhaltiInitiateRequest> entity =
-                new HttpEntity<>(request, headers);
+        int amountInPaisa = request.getAmount() * 100;
+        String purchaseOrderId = "TOPUP_" + System.currentTimeMillis();
+
+        Map<String, Object> payload = Map.of(
+                "return_url", "http://localhost:3000/balance-report",
+                "website_url", "http://localhost:3000",
+                "amount", amountInPaisa,
+                "purchase_order_id", purchaseOrderId,
+                "purchase_order_name", "SMS Balance Top-up",
+                "amount_breakdown", List.of(
+                        Map.of("label", "Top-up Amount", "amount", amountInPaisa)
+                ),
+                "product_details", List.of(
+                        Map.of(
+                                "identity", purchaseOrderId,
+                                "name", "SMS Balance Top-up",
+                                "total_price", amountInPaisa,
+                                "quantity", 1,
+                                "unit_price", amountInPaisa
+                        )
+                ),
+                "customer_info", Map.of(
+                        "name", "kritimmind Technology",
+                        "email", "Kritimind@gmail.com",
+                        "phone", "9800000000"
+                )
+        );
+
+        HttpEntity<Map<String, Object>> entity =
+                new HttpEntity<>(payload, headers);
 
         ResponseEntity<Map> response =
                 restTemplate.postForEntity(url, entity, Map.class);
 
         Map<String, Object> body = response.getBody();
         if (body == null || body.get("pidx") == null) {
+            log.error("Khalti initiate failed: {}", body);
             throw new RuntimeException("Failed to initiate Khalti payment");
         }
 
         String pidx = body.get("pidx").toString();
 
-
+//save in database response of the khalti after payments
         KhaltiPayment payment = new KhaltiPayment();
         payment.setPidx(pidx);
-        payment.setAmount(request.getAmount());
+        payment.setAmount(amountInPaisa);
         payment.setStatus("Pending");
-        payment.setPurchaseOrderId(request.getPurchase_order_id());
-        payment.setPurchaseOrderName(request.getPurchase_order_name());
-        payment.setPaidAt(null);
+        payment.setPurchaseOrderId(purchaseOrderId);
+        payment.setPurchaseOrderName("SMS Balance Top-up");
 
         repository.save(payment);
 
-        KhaltiInitiateResponse res = new KhaltiInitiateResponse();
-        res.setPidx(pidx);
-        res.setPaymentUrl(body.get("payment_url").toString());
-        res.setMessage("Payment initiated successfully");
-
-        return res;
+        return new KhaltiInitiateResponse(
+                body.get("payment_url").toString(),
+                pidx,
+                "Payment initiated successfully"
+        );
     }
-
-
     public KhaltiPayment verifyAndSavePayment(KhaltiVerifyRequest request) {
 
         String url = khaltiConfig.getBaseUrl() + "epayment/lookup/";
@@ -87,15 +111,14 @@ public class KhaltiService {
 
         Map<String, Object> body = response.getBody();
         if (body == null || !"Completed".equals(body.get("status"))) {
+            log.error("Khalti verification failed: {}", body);
             throw new RuntimeException("Payment not completed or invalid response");
         }
 
         String pidx = body.get("pidx").toString();
 
-
         KhaltiPayment payment = repository.findByPidx(pidx)
                 .orElseThrow(() -> new RuntimeException("Payment record not found"));
-
 
         if ("Completed".equals(payment.getStatus())) {
             return payment;

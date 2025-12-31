@@ -2,6 +2,7 @@ package com.kritim_mind.sms_project.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -29,4 +30,8 @@ public class KhaltiPayment {
     private String email;
 
     private LocalDateTime paidAt;
+
+    @Column(nullable = false, updatable = false)
+    @CreationTimestamp
+    private LocalDateTime createdAt;
 }

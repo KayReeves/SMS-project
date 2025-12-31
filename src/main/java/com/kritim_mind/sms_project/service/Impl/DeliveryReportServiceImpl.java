@@ -65,6 +65,7 @@ public class DeliveryReportServiceImpl implements DeliveryReportService {
         report = reportRepository.save(report);
 
         // Update recipient message status
+
         if (request.getStatus() == DeliveryStatus.DELIVERED) {
             recipient.setStatus(MessageStatus.DELIVERED);
             recipient.setDeliveredAt(LocalDateTime.now());
@@ -112,9 +113,7 @@ public class DeliveryReportServiceImpl implements DeliveryReportService {
         log.info("Delivery report deleted successfully");
     }
 
-    // ------------------------
-    // Mapping helper
-    // ------------------------
+
     private DeliveryReportResponse mapToResponse(DeliveryReport report) {
         DeliveryReportResponse response = new DeliveryReportResponse();
         response.setId(report.getId());
