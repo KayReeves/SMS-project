@@ -33,7 +33,6 @@ public class KhaltiInitiateRequest {
     @JsonProperty("website_url")
     private String website_url;
 
-    // FIXED: Must be a List of items (Khalti requires array)
     @NotEmpty(message = "Amount breakdown is required")
     @JsonProperty("amount_breakdown")
     private List<AmountBreakdownItem> amount_breakdown;

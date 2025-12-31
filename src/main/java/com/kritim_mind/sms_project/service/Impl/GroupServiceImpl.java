@@ -3,12 +3,12 @@ package com.kritim_mind.sms_project.service.Impl;
 import com.kritim_mind.sms_project.dto.request.GroupRequest;
 import com.kritim_mind.sms_project.dto.response.ContactResponse;
 import com.kritim_mind.sms_project.dto.response.GroupResponse;
+import com.kritim_mind.sms_project.exception.ResourceNotFoundException;
 import com.kritim_mind.sms_project.model.Contact;
 import com.kritim_mind.sms_project.model.Group;
 import com.kritim_mind.sms_project.repository.ContactRepository;
 import com.kritim_mind.sms_project.repository.GroupRepository;
 import com.kritim_mind.sms_project.service.Interface.GroupService;
-import com.kritim_mind.sms_project.utils.ResourceNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -143,7 +143,7 @@ public class GroupServiceImpl implements GroupService {
                         new BufferedReader(new InputStreamReader(file.getInputStream()))
         ) {
 
-            // 🔑 Key = phoneNo → auto-deduplication
+            //  Key = phoneNo → auto-deduplication
             Map<String, Contact> uniqueContacts = new HashMap<>();
 
             String line;
@@ -169,7 +169,7 @@ public class GroupServiceImpl implements GroupService {
 
                 if (phoneNo.isBlank()) continue;
 
-                // ✅ Merge logic (CSV + DB safe)
+                //  Merge logic (CSV + DB safe)
                 uniqueContacts.computeIfAbsent(phoneNo, pn ->
                         contactRepository.findByPhoneNo(pn)
                                 .orElse(
@@ -186,7 +186,7 @@ public class GroupServiceImpl implements GroupService {
                 throw new ResourceNotFoundException("No valid contacts found in file");
             }
 
-            // ✅ Save only unique contacts
+            // Save only unique contacts
             List<Contact> savedContacts =
                     contactRepository.saveAll(uniqueContacts.values());
 

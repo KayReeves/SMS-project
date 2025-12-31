@@ -2,6 +2,7 @@ package com.kritim_mind.sms_project.service.Impl;
 
 import com.kritim_mind.sms_project.dto.request.DeliveryReportRequest;
 import com.kritim_mind.sms_project.dto.response.DeliveryReportResponse;
+import com.kritim_mind.sms_project.exception.ResourceNotFoundException;
 import com.kritim_mind.sms_project.model.DeliveryReport;
 import com.kritim_mind.sms_project.model.DeliveryStatus;
 import com.kritim_mind.sms_project.model.MessageRecipient;
@@ -9,7 +10,6 @@ import com.kritim_mind.sms_project.model.MessageStatus;
 import com.kritim_mind.sms_project.repository.DeliveryReportRepository;
 import com.kritim_mind.sms_project.repository.MessageRecipientRepository;
 import com.kritim_mind.sms_project.service.Interface.DeliveryReportService;
-import com.kritim_mind.sms_project.utils.ResourceNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

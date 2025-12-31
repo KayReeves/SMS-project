@@ -2,7 +2,6 @@ package com.kritim_mind.sms_project.exception;
 
 import com.kritim_mind.sms_project.dto.response.ApiResponse;
 import com.kritim_mind.sms_project.utils.DuplicateResourceException;
-import com.kritim_mind.sms_project.utils.ResourceNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
