@@ -1,6 +1,6 @@
 package com.kritim_mind.sms_project.controller;
 
-import com.kritim_mind.sms_project.dto.request.KhaltiInitiateRequest;
+import com.kritim_mind.sms_project.dto.request.KhaltiTopupRequest;
 import com.kritim_mind.sms_project.dto.request.KhaltiVerifyRequest;
 import com.kritim_mind.sms_project.dto.response.KhaltiInitiateResponse;
 import com.kritim_mind.sms_project.model.KhaltiPayment;
@@ -26,25 +26,31 @@ public class KhaltiController {
         this.service = service;
     }
 
+
     @PostMapping("/initiate")
     public ResponseEntity<KhaltiInitiateResponse> initiate(
-            @Valid @RequestBody KhaltiInitiateRequest request) {
+            @Valid @RequestBody KhaltiTopupRequest request) {
+
         return ResponseEntity.ok(service.initiatePayment(request));
     }
+
 
     @PostMapping("/verify")
     public ResponseEntity<?> verify(@Valid @RequestBody KhaltiVerifyRequest request) {
         KhaltiPayment payment = service.verifyAndSavePayment(request);
         return ResponseEntity.ok(Map.of(
                 "message", "Payment verified and saved",
+                "transactionId", payment.getTransactionId(),
                 "data", payment
         ));
     }
+
 
     @GetMapping("/payments")
     public ResponseEntity<List<KhaltiPayment>> payments() {
         return ResponseEntity.ok(service.getAllPayments());
     }
+
 
     @GetMapping("/callback")
     public ResponseEntity<Void> callback(

@@ -8,11 +8,14 @@ import java.time.LocalDate;
 @Data
 @AllArgsConstructor
 public class DailyReportData {
-    private LocalDate date;
-    private Long smsCount;
-    private Long pendingSmsCount;
-    private Long failedSmsCount;
 
-    public DailyReportData(LocalDate of, long smsCount) {
+    private Long smsCount;
+    private  int totalSmsCount;
+    private int pendingCount;
+    private int  failedCount;
+
+    private LocalDate date;
+
+    public DailyReportData(LocalDate of, long l) {
     }
 }
