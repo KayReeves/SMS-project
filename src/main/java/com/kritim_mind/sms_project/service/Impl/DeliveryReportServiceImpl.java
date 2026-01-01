@@ -13,6 +13,7 @@ import com.kritim_mind.sms_project.service.Interface.DeliveryReportService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -27,9 +28,24 @@ public class DeliveryReportServiceImpl implements DeliveryReportService {
     private final DeliveryReportRepository reportRepository;
     private final MessageRecipientRepository recipientRepository;
 
+    // NEW: Get all delivery reports (sorted by newest first)
+    @Override
+    @Transactional
+    public List<DeliveryReportResponse> getAllDeliveryReports() {
+        log.info("Fetching all delivery reports");
+        List<DeliveryReport> reports = reportRepository.findAll(
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+
+        return reports.stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
     @Override
     @Transactional
     public List<DeliveryReportResponse> getReportsByRecipientId(Long recipientId) {
+        log.info("Fetching reports for recipient ID: {}", recipientId);
         List<DeliveryReport> reports = reportRepository.findByMessageRecipientId(recipientId);
 
         return reports.stream()
@@ -40,21 +56,20 @@ public class DeliveryReportServiceImpl implements DeliveryReportService {
     @Override
     @Transactional
     public DeliveryReportResponse getReportById(Long id) {
+        log.info("Fetching report by ID: {}", id);
         DeliveryReport report = reportRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Delivery report not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Delivery report not found with ID: " + id));
 
         return mapToResponse(report);
     }
 
     @Override
     @Transactional
-    public DeliveryReportResponse createDeliveryReport(Long recipientId,
-                                                       DeliveryReportRequest request) {
-
+    public DeliveryReportResponse createDeliveryReport(Long recipientId, DeliveryReportRequest request) {
         log.info("Creating delivery report for recipient ID: {}", recipientId);
 
         MessageRecipient recipient = recipientRepository.findById(recipientId)
-                .orElseThrow(() -> new ResourceNotFoundException("Recipient not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Recipient not found with ID: " + recipientId));
 
         DeliveryReport report = DeliveryReport.builder()
                 .messageRecipient(recipient)
@@ -64,8 +79,7 @@ public class DeliveryReportServiceImpl implements DeliveryReportService {
 
         report = reportRepository.save(report);
 
-        // Update recipient message status
-
+        // Update recipient status based on delivery
         if (request.getStatus() == DeliveryStatus.DELIVERED) {
             recipient.setStatus(MessageStatus.DELIVERED);
             recipient.setDeliveredAt(LocalDateTime.now());
@@ -74,10 +88,10 @@ public class DeliveryReportServiceImpl implements DeliveryReportService {
             recipient.setFailedAt(LocalDateTime.now());
         }
 
+
         recipientRepository.save(recipient);
 
         log.info("Delivery report created with ID: {}", report.getId());
-
         return mapToResponse(report);
     }
 
@@ -87,7 +101,7 @@ public class DeliveryReportServiceImpl implements DeliveryReportService {
         log.info("Updating delivery report ID: {}", id);
 
         DeliveryReport report = reportRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Delivery report not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Delivery report not found with ID: " + id));
 
         report.setStatus(request.getStatus());
         report.setDescription(request.getDescription());
@@ -95,7 +109,6 @@ public class DeliveryReportServiceImpl implements DeliveryReportService {
         report = reportRepository.save(report);
 
         log.info("Delivery report updated successfully");
-
         return mapToResponse(report);
     }
 
@@ -105,14 +118,12 @@ public class DeliveryReportServiceImpl implements DeliveryReportService {
         log.info("Deleting delivery report ID: {}", id);
 
         if (!reportRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Delivery report not found");
+            throw new ResourceNotFoundException("Delivery report not found with ID: " + id);
         }
 
         reportRepository.deleteById(id);
-
         log.info("Delivery report deleted successfully");
     }
-
 
     private DeliveryReportResponse mapToResponse(DeliveryReport report) {
         DeliveryReportResponse response = new DeliveryReportResponse();

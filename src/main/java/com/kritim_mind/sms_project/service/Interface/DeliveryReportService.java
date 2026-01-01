@@ -6,6 +6,10 @@ import com.kritim_mind.sms_project.dto.response.DeliveryReportResponse;
 import java.util.List;
 
 public interface DeliveryReportService {
+
+    // NEW: Get all reports
+    List<DeliveryReportResponse> getAllDeliveryReports();
+
     List<DeliveryReportResponse> getReportsByRecipientId(Long recipientId);
 
     DeliveryReportResponse getReportById(Long id);
@@ -16,4 +20,3 @@ public interface DeliveryReportService {
 
     void deleteDeliveryReport(Long id);
 }
-
