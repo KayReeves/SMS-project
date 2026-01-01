@@ -29,7 +29,6 @@ public class DashboardServiceImpl implements DashboardService {
 
     private final AdminRepository adminRepository;
     private final MessageRepository messageRepository;
-    private final ContactRepository contactRepository;
     private final GroupRepository groupRepository;
 
     @Override

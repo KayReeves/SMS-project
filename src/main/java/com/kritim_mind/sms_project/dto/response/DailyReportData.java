@@ -10,4 +10,9 @@ import java.time.LocalDate;
 public class DailyReportData {
     private LocalDate date;
     private Long smsCount;
+    private Long pendingSmsCount;
+    private Long failedSmsCount;
+
+    public DailyReportData(LocalDate of, long smsCount) {
+    }
 }
