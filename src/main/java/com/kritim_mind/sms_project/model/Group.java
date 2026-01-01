@@ -19,6 +19,7 @@ import java.util.Set;
 @AllArgsConstructor
 @Builder
 public class Group {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -48,4 +49,13 @@ public class Group {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Column(nullable = true)
+    private String originalFileName;
+
+    @Column(nullable = true)
+    private String contentType;
+
+    @Column(nullable = true)
+    private Long fileSizeBytes;
 }

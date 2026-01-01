@@ -6,4 +6,7 @@ import lombok.Data;
 public class GroupRequest {
     private String name;
     private String description;
+    private String originalFileName;
+    private String contentType;
+    private long fileSizeBytes;
 }

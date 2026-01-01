@@ -54,15 +54,20 @@ public class GroupServiceImpl implements GroupService {
     @Override
     @Transactional
     public GroupResponse createGroup(GroupRequest request) {
+
         log.info("Creating group: {}", request.getName());
 
         Group group = Group.builder()
                 .name(request.getName())
                 .description(request.getDescription())
+                .originalFileName(request.getOriginalFileName())
+                .contentType(request.getContentType())
+                .fileSizeBytes(request.getFileSizeBytes())
                 .isDeleted(false)
                 .build();
 
         group = groupRepository.save(group);
+
         log.info("Group created with ID: {}", group.getId());
 
         return mapToResponse(group);
@@ -196,14 +201,13 @@ public class GroupServiceImpl implements GroupService {
                     .toList();
 
             // Create group and attach contacts
+            groupRequest.setOriginalFileName(originalFileName);
+            groupRequest.setContentType(contentType);
+            groupRequest.setFileSizeBytes(fileSizeBytes);
+
             GroupResponse groupResponse = createGroup(groupRequest);
             GroupResponse response =
                     addContactToGroup(groupResponse.getId(), contactIds);
-
-            // Metadata
-            response.setOriginalFileName(originalFileName);
-            response.setContentType(contentType);
-            response.setFileSizeBytes(fileSizeBytes);
 
             return response;
 
@@ -256,6 +260,9 @@ public class GroupServiceImpl implements GroupService {
         response.setContacts(group.getContacts().stream()
                 .map(this::mapContactToResponse)
                 .collect(Collectors.toList()));
+        response.setOriginalFileName(group.getOriginalFileName());
+        response.setFileSizeBytes(group.getFileSizeBytes());
+        response.setContentType(group.getContentType());
         response.setCreatedAt(group.getCreatedAt());
         response.setUpdatedAt(group.getUpdatedAt());
         return response;

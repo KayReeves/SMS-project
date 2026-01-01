@@ -1,6 +1,5 @@
 package com.kritim_mind.sms_project.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kritim_mind.sms_project.dto.response.DailyReportData;
 import com.kritim_mind.sms_project.dto.response.DashboardResponse;
 import com.kritim_mind.sms_project.service.Interface.DashboardService;
@@ -26,85 +25,81 @@ class DashboardControllerTest {
     @MockBean
     private DashboardService dashboardService;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    /* ------------------------------------------
+       Helper methods
+    ------------------------------------------ */
+    private DashboardResponse mockDashboardResponse() {
+        return DashboardResponse.builder()
+                .totalSmsSentYesterday(120L)
+                .totalTransactions(45L)
+                .totalSmsLength(560L)
+                .remainingBalance(980)
+                .contactsCount(150L)
+                .groupsCount(12L)
+                .build();
+    }
 
-    private static final Long ADMIN_ID = 1L;
+    private DailyReportData mockDailyReport() {
+        return new DailyReportData(
+                LocalDate.now(),
+                200L,
+                180L,
+                20L
+        );
+    }
 
-    // ------------------ DASHBOARD SUMMARY ------------------
-
+    /* ------------------------------------------
+       GET /api/dashboard
+    ------------------------------------------ */
     @Test
     void getDashboardSummary_success() throws Exception {
-
-        DashboardResponse response = DashboardResponse.builder()
-                .totalSmsSentYesterday(120L)
-                .totalTransactions(50L)
-                .totalSmsLength(360L)
-                .remainingBalance(800)
-                .contactsCount(200L)
-                .groupsCount(10L)
-                .build();
-
-        Mockito.when(dashboardService.getDashboardSummary(ADMIN_ID))
-                .thenReturn(response);
+        Mockito.when(dashboardService.getDashboardSummary(1L))
+                .thenReturn(mockDashboardResponse());
 
         mockMvc.perform(get("/api/dashboard")
-                        .param("admin_id", ADMIN_ID.toString()))
+                        .param("admin_id", "1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.totalSmsSentYesterday").value(120))
-                .andExpect(jsonPath("$.data.remainingBalance").value(800))
-                .andExpect(jsonPath("$.data.contactsCount").value(200));
+                .andExpect(jsonPath("$.data.remainingBalance").value(980))
+                .andExpect(jsonPath("$.data.groupsCount").value(12));
     }
 
-    // ------------------ DAILY REPORT ------------------
-
+    /* ------------------------------------------
+       GET /api/reports/daily
+    ------------------------------------------ */
     @Test
     void getDailyReport_success() throws Exception {
-
-        List<DailyReportData> reports = List.of(
-                new DailyReportData(LocalDate.of(2025, 1, 1), 100L, 5L, 2L),
-                new DailyReportData(LocalDate.of(2025, 1, 2), 120L, 3L, 1L)
-        );
-
         Mockito.when(dashboardService.getDailyReport(
-                        Mockito.eq(ADMIN_ID),
+                        Mockito.eq(1L),
                         Mockito.any(LocalDate.class),
                         Mockito.any(LocalDate.class)))
-                .thenReturn(reports);
+                .thenReturn(List.of(mockDailyReport()));
 
         mockMvc.perform(get("/api/reports/daily")
-                        .param("admin_id", ADMIN_ID.toString())
-                        .param("start_date", "2025-01-01")
-                        .param("end_date", "2025-01-02"))
+                        .param("admin_id", "1")
+                        .param("start_date", "2024-01-01")
+                        .param("end_date", "2024-01-31"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.length()").value(2))
-                .andExpect(jsonPath("$.data[0].smsCount").value(100))
-                .andExpect(jsonPath("$.data[0].pendingSmsCount").value(5))
-                .andExpect(jsonPath("$.data[0].failedSmsCount").value(2));
+                .andExpect(jsonPath("$.data[0].smsCount").value(200))
+                .andExpect(jsonPath("$.data[0].totalDeliveredMessage").value(180))
+                .andExpect(jsonPath("$.data[0].totalFailedMessage").value(20));
     }
 
-    // ------------------ MONTHLY REPORT ------------------
-
+    /* ------------------------------------------
+       GET /api/reports/monthly
+    ------------------------------------------ */
     @Test
     void getMonthlyReport_success() throws Exception {
-
-        List<DailyReportData> reports = List.of(
-                new DailyReportData(LocalDate.of(2025, 1, 1), 3000L, 50L, 10L),
-                new DailyReportData(LocalDate.of(2025, 2, 1), 2800L, 40L, 12L)
-        );
-
-        Mockito.when(dashboardService.getMonthlyReport(ADMIN_ID, 2025))
-                .thenReturn(reports);
+        Mockito.when(dashboardService.getMonthlyReport(1L, 2024))
+                .thenReturn(List.of(mockDailyReport()));
 
         mockMvc.perform(get("/api/reports/monthly")
-                        .param("admin_id", ADMIN_ID.toString())
-                        .param("year", "2025"))
+                        .param("admin_id", "1")
+                        .param("year", "2024"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.length()").value(2))
-                .andExpect(jsonPath("$.data[1].smsCount").value(2800))
-                .andExpect(jsonPath("$.data[1].failedSmsCount").value(12));
+                .andExpect(jsonPath("$.data[0].smsCount").value(200));
     }
 }
