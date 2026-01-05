@@ -12,15 +12,13 @@ import com.kritim_mind.sms_project.service.Interface.GroupService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.usermodel.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -128,95 +126,54 @@ public class GroupServiceImpl implements GroupService {
             GroupRequest groupRequest
     ) {
 
-        String originalFileName = file.getOriginalFilename();
-        String contentType = file.getContentType();
-        long fileSizeBytes = file.getSize();
-
-        log.info("Uploaded file: name={}, type={}, size={} bytes",
-                originalFileName, contentType, fileSizeBytes);
-
-        if (fileSizeBytes == 0) {
+        if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("Uploaded file is empty");
         }
 
-        if (contentType == null || !contentType.equalsIgnoreCase("text/csv")) {
-            throw new IllegalArgumentException("Only CSV files are allowed");
+        String filename = file.getOriginalFilename();
+        String contentType = file.getContentType();
+        long fileSizeBytes = file.getSize();
+
+        boolean isCsv =
+                "text/csv".equalsIgnoreCase(contentType)
+                        || (filename != null && filename.toLowerCase().endsWith(".csv"));
+
+        boolean isExcel =
+                "application/vnd.ms-excel".equalsIgnoreCase(contentType)
+                        || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                        .equalsIgnoreCase(contentType)
+                        || "application/octet-stream".equalsIgnoreCase(contentType)
+                        || (filename != null && (
+                        filename.toLowerCase().endsWith(".xls")
+                                || filename.toLowerCase().endsWith(".xlsx")));
+
+        if (!isCsv && !isExcel) {
+            throw new IllegalArgumentException("Only CSV or Excel files are allowed");
         }
 
-        try (
-                BufferedReader reader =
-                        new BufferedReader(new InputStreamReader(file.getInputStream()))
-        ) {
+        Map<String, Contact> uniqueContacts =
+                isCsv ? parseCsv(file) : parseExcel(file);
 
-            //  Key = phoneNo → auto-deduplication
-            Map<String, Contact> uniqueContacts = new HashMap<>();
-
-            String line;
-            boolean headerSkipped = false;
-
-            while ((line = reader.readLine()) != null) {
-                line = line.trim();
-                if (line.isEmpty()) continue;
-
-                // Skip CSV header once
-                if (!headerSkipped && line.toLowerCase().contains("phone")) {
-                    headerSkipped = true;
-                    continue;
-                }
-                headerSkipped = true;
-
-                // Expected format: name,phoneNo
-                String[] parts = line.split(",");
-                if (parts.length != 2) continue;
-
-                String name = parts[0].trim();
-                String phoneNo = parts[1].trim();
-
-                if (phoneNo.isBlank()) continue;
-
-                //  Merge logic (CSV + DB safe)
-                uniqueContacts.computeIfAbsent(phoneNo, pn ->
-                        contactRepository.findByPhoneNo(pn)
-                                .orElse(
-                                        Contact.builder()
-                                                .name(name)
-                                                .phoneNo(pn)
-                                                .isDeleted(false)
-                                                .build()
-                                )
-                );
-            }
-
-            if (uniqueContacts.isEmpty()) {
-                throw new ResourceNotFoundException("No valid contacts found in file");
-            }
-
-            // Save only unique contacts
-            List<Contact> savedContacts =
-                    contactRepository.saveAll(uniqueContacts.values());
-
-            // Extract IDs
-            List<Long> contactIds = savedContacts.stream()
-                    .map(Contact::getId)
-                    .toList();
-
-            // Create group and attach contacts
-            groupRequest.setOriginalFileName(originalFileName);
-            groupRequest.setContentType(contentType);
-            groupRequest.setFileSizeBytes(fileSizeBytes);
-
-            GroupResponse groupResponse = createGroup(groupRequest);
-            GroupResponse response =
-                    addContactToGroup(groupResponse.getId(), contactIds);
-
-            return response;
-
-        } catch (Exception e) {
-            throw new RuntimeException(
-                    "Failed to process file: " + e.getMessage(), e
-            );
+        if (uniqueContacts.isEmpty()) {
+            throw new ResourceNotFoundException("No valid contacts found in file");
         }
+
+        List<Contact> savedContacts =
+                contactRepository.saveAll(uniqueContacts.values());
+
+        List<Long> contactIds = savedContacts.stream()
+                .map(Contact::getId)
+                .toList();
+
+        groupRequest.setOriginalFileName(filename);
+        groupRequest.setContentType(contentType);
+        groupRequest.setFileSizeBytes(fileSizeBytes);
+
+        GroupResponse groupResponse = createGroup(groupRequest);
+
+        return addContactToGroup(groupResponse.getId(), contactIds);
     }
+
 
 
     @Override
@@ -274,5 +231,101 @@ public class GroupServiceImpl implements GroupService {
         response.setName(contact.getName());
         response.setPhoneNo(contact.getPhoneNo());
         return response;
+    }
+    // ================= CSV PARSER =================
+
+    private Map<String, Contact> parseCsv(MultipartFile file) {
+
+        Map<String, Contact> uniqueContacts = new HashMap<>();
+
+        try (BufferedReader reader =
+                     new BufferedReader(new InputStreamReader(file.getInputStream()))) {
+
+            String line;
+            boolean headerSkipped = false;
+
+            while ((line = reader.readLine()) != null) {
+
+                if (!headerSkipped) {
+                    headerSkipped = true;
+                    continue;
+                }
+
+                String[] parts = line.split(",");
+                if (parts.length < 2) continue;
+
+                String name = parts[0].trim();
+                String phoneNo = normalizePhone(parts[1]);
+
+                if (phoneNo.isBlank()) continue;
+
+                uniqueContacts.computeIfAbsent(phoneNo, pn ->
+                        contactRepository.findByPhoneNo(pn)
+                                .orElse(Contact.builder()
+                                        .name(name)
+                                        .phoneNo(pn)
+                                        .isDeleted(false)
+                                        .build())
+                );
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException("CSV parsing failed", e);
+        }
+
+        return uniqueContacts;
+    }
+
+
+    // ================= EXCEL PARSER =================
+
+    private Map<String, Contact> parseExcel(MultipartFile file) {
+
+        Map<String, Contact> map = new HashMap<>();
+
+        try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
+
+            Sheet sheet = workbook.getSheetAt(0);
+
+            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+
+                Row row = sheet.getRow(i);
+                if (row == null) continue;
+
+                String name = getCellValue(row.getCell(0));
+                String phone = getCellValue(row.getCell(1));
+
+                if (phone.isBlank()) continue;
+
+                map.computeIfAbsent(phone, p ->
+                        contactRepository.findByPhoneNo(p)
+                                .orElse(Contact.builder()
+                                        .name(name)
+                                        .phoneNo(p)
+                                        .isDeleted(false)
+                                        .build()));
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException("Excel parsing failed", e);
+        }
+
+        return map;
+    }
+
+    private String getCellValue(Cell cell) {
+        if (cell == null) return "";
+
+        return switch (cell.getCellType()) {
+            case STRING -> cell.getStringCellValue().trim();
+            case NUMERIC -> String.valueOf((long) cell.getNumericCellValue());
+            default -> "";
+        };
+    }
+
+    private String normalizePhone(String phone) {
+        if (phone == null) return "";
+
+        return phone.replaceAll("[^0-9]", "").trim();
     }
 }
