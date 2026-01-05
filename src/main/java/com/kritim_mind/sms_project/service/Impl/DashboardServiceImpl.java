@@ -5,7 +5,6 @@ import com.kritim_mind.sms_project.dto.response.DashboardResponse;
 import com.kritim_mind.sms_project.exception.ResourceNotFoundException;
 import com.kritim_mind.sms_project.model.Admin;
 import com.kritim_mind.sms_project.repository.AdminRepository;
-import com.kritim_mind.sms_project.repository.ContactRepository;
 import com.kritim_mind.sms_project.repository.GroupRepository;
 import com.kritim_mind.sms_project.repository.MessageRepository;
 import com.kritim_mind.sms_project.service.Interface.DashboardService;
@@ -65,8 +64,7 @@ public class DashboardServiceImpl implements DashboardService {
     @Override
     @Transactional
     public List<DailyReportData> getDailyReport(Long adminId, LocalDate startDate, LocalDate endDate) {
-        log.info("Fetching daily report for admin ID: {} from {} to {}",
-                adminId, startDate, endDate);
+        log.info("Fetching daily report for admin ID: {} from {} to {}", adminId, startDate, endDate);
 
         LocalDateTime start = startDate.atStartOfDay();
         LocalDateTime end = endDate.atTime(LocalTime.MAX);
@@ -74,10 +72,15 @@ public class DashboardServiceImpl implements DashboardService {
         List<Object[]> results = messageRepository.getDailySmsUsage(adminId, start, end);
 
         List<DailyReportData> reportData = new ArrayList<>();
+
         for (Object[] result : results) {
-            Date date = (Date) result[0];
-            Long total = ((Number) result[1]).longValue();
-            reportData.add(new DailyReportData(date.toLocalDate(), total));
+            Date sqlDate = (Date) result[0];
+            LocalDate date = sqlDate.toLocalDate();
+
+            // FIXED: Safe handling of null SUM() result
+            Long total = (result[1] == null) ? 0L : ((Number) result[1]).longValue();
+
+            reportData.add(new DailyReportData(date, total));
         }
 
         return reportData;

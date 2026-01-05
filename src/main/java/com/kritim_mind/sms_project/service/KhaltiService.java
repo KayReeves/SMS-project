@@ -29,6 +29,9 @@ public class KhaltiService {
         this.repository = repository;
     }
 
+    /**
+     * Initiates a Khalti payment and saves a record with INITIATED status
+     */
     public KhaltiInitiateResponse initiatePayment(KhaltiTopupRequest request) {
 
         String url = khaltiConfig.getBaseUrl() + "epayment/initiate/";
@@ -65,13 +68,11 @@ public class KhaltiService {
                 )
         );
 
-        HttpEntity<Map<String, Object>> entity =
-                new HttpEntity<>(payload, headers);
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
 
-        ResponseEntity<Map> response =
-                restTemplate.postForEntity(url, entity, Map.class);
-
+        ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
         Map<String, Object> body = response.getBody();
+
         if (body == null || body.get("pidx") == null) {
             log.error("Khalti initiate failed: {}", body);
             throw new RuntimeException("Failed to initiate Khalti payment");
@@ -79,15 +80,16 @@ public class KhaltiService {
 
         String pidx = body.get("pidx").toString();
 
-//save in database response of the khalti after payments
+        // Save in database with INITIATED status
         KhaltiPayment payment = new KhaltiPayment();
         payment.setPidx(pidx);
         payment.setAmount(amountInPaisa);
-        payment.setStatus("Pending");
+        payment.setStatus("INITIATED");  // <-- changed from COMPLETE
         payment.setPurchaseOrderId(purchaseOrderId);
         payment.setPurchaseOrderName("SMS Balance Top-up");
 
         repository.save(payment);
+        log.info("Khalti payment initiated: {}", pidx);
 
         return new KhaltiInitiateResponse(
                 body.get("payment_url").toString(),
@@ -95,6 +97,10 @@ public class KhaltiService {
                 "Payment initiated successfully"
         );
     }
+
+    /**
+     * Verifies Khalti payment and updates status to Completed
+     */
     public KhaltiPayment verifyAndSavePayment(KhaltiVerifyRequest request) {
 
         String url = khaltiConfig.getBaseUrl() + "epayment/lookup/";
@@ -103,13 +109,11 @@ public class KhaltiService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("Authorization", "Key " + khaltiConfig.getSecretKey());
 
-        HttpEntity<KhaltiVerifyRequest> entity =
-                new HttpEntity<>(request, headers);
+        HttpEntity<KhaltiVerifyRequest> entity = new HttpEntity<>(request, headers);
 
-        ResponseEntity<Map> response =
-                restTemplate.postForEntity(url, entity, Map.class);
-
+        ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
         Map<String, Object> body = response.getBody();
+
         if (body == null || !"Completed".equals(body.get("status"))) {
             log.error("Khalti verification failed: {}", body);
             throw new RuntimeException("Payment not completed or invalid response");
@@ -118,17 +122,17 @@ public class KhaltiService {
         String pidx = body.get("pidx").toString();
 
         KhaltiPayment payment = repository.findByPidx(pidx)
-                .orElseThrow(() -> new RuntimeException("Payment record not found"));
+                .orElseThrow(() -> new RuntimeException("Payment record not found for pidx: " + pidx));
 
         if ("Completed".equals(payment.getStatus())) {
+            log.info("Payment already verified: {}", pidx);
             return payment;
         }
 
         payment.setStatus("Completed");
-        payment.setTransactionId(
-                body.get("transaction_id") != null
-                        ? body.get("transaction_id").toString()
-                        : null
+        payment.setTransactionId(body.get("transaction_id") != null
+                ? body.get("transaction_id").toString()
+                : null
         );
 
         Object paidAtObj = body.get("paid_at");
@@ -142,9 +146,14 @@ public class KhaltiService {
             payment.setPaidAt(LocalDateTime.now());
         }
 
-        return repository.save(payment);
+        KhaltiPayment savedPayment = repository.save(payment);
+        log.info("Khalti payment verified and updated: {}", pidx);
+        return savedPayment;
     }
 
+    /**
+     * Retrieves all Khalti payments
+     */
     public List<KhaltiPayment> getAllPayments() {
         return repository.findAll();
     }
