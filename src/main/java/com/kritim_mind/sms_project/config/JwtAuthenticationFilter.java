@@ -1,11 +1,12 @@
 package com.kritim_mind.sms_project.config;
 
+import com.kritim_mind.sms_project.service.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.Cookie;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Bean;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -20,62 +21,56 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final com.kritim_mind.sms_project.service.JwtService jwtService;
+    private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
+
+    // Skip filter for public endpoints
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+        return path.startsWith("/api/auth/login")
+                || path.startsWith("/swagger")
+                || path.startsWith("/v3/api-docs")
+                || path.startsWith("/api/khalti");
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
-
-
-        String path = request.getServletPath();
-
-        // Skip JWT filter for public endpoints
-        if (path.startsWith("/api/khalti") || path.startsWith("/api/auth/login")
-                || path.startsWith("/swagger") || path.startsWith("/v3/api-docs")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
         String jwt = null;
-        String username = null;
 
-        final String authHeader = request.getHeader("Authorization");
+        // Read token from Authorization header
+        String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             jwt = authHeader.substring(7);
-        } else {
-            if (request.getCookies() != null) {
-                for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
-                    if ("access_token".equals(cookie.getName())) {
-                        jwt = cookie.getValue();
-                        break;
-                    }
+        } else if (request.getCookies() != null) {
+            // Read token from httpOnly cookie
+            for (Cookie cookie : request.getCookies()) {
+                if ("access_token".equals(cookie.getName())) {
+                    jwt = cookie.getValue();
+                    break;
                 }
             }
         }
 
-        if (jwt == null) {
-            filterChain.doFilter(request, response);
-            return;
-        }
+        if (jwt != null) {
+            String username = jwtService.extractUsername(jwt);
 
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-        username = jwtService.extractUsername(jwt);
-
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-
-            if (jwtService.isTokenValid(jwt, userDetails)) {
-                UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities()
-                        );
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+                if (jwtService.isTokenValid(jwt, userDetails)) {
+                    UsernamePasswordAuthenticationToken authToken =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails,
+                                    null,
+                                    userDetails.getAuthorities()
+                            );
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
             }
         }
 

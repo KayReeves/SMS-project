@@ -27,16 +27,14 @@ public class AuthController {
 
         LoginResponse loginResponse = authService.login(request);
 
+        // Create httpOnly cookie
         ResponseCookie cookie = ResponseCookie.from("access_token", loginResponse.getToken())
                 .httpOnly(true)
-                .secure(false)
+                .secure(false) // true for production with HTTPS
                 .path("/")
-                .sameSite("Lax")
-                .maxAge(60 * 60 * 24)
+                .sameSite("None")
+                .maxAge(60 * 60 * 24) // 1 day
                 .build();
-
-        httpResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-
 
         httpResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
