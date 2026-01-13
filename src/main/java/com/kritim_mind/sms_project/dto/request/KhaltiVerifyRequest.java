@@ -6,10 +6,20 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class KhaltiVerifyRequest {
-
+    private Long id;
     @NotBlank(message = "pidx is required")
     private String pidx;
+
+    public KhaltiVerifyRequest() {
+    }
+
+    public KhaltiVerifyRequest(String pidx) {
+        this.pidx = pidx;
+    }
+
+    public KhaltiVerifyRequest(Long id, String pidx) {
+        this.id = id;
+        this.pidx = pidx;
+    }
 }

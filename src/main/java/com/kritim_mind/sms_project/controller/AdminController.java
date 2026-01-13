@@ -42,20 +42,4 @@ class AdminController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    @PostMapping("/{admin_id}/balance/update")
-    public ResponseEntity<ApiResponse<BalanceResponse>> updateBalance(
-            @PathVariable("admin_id") Long adminId,
-            @RequestBody BalanceUpdateRequest request) {
-        BalanceResponse response = adminService.updateBalance(adminId, request);
-        return ResponseEntity.ok(ApiResponse.success("Balance updated successfully", response));
-    }
-
-    @PostMapping("/{admin_id}/balance/topup")
-    public ResponseEntity<ApiResponse<BalanceResponse>> topupBalance(
-            @PathVariable("admin_id") Long adminId,
-            @RequestBody BalanceTopUpRequest request) {
-        BalanceResponse response = adminService.topupBalance(adminId, request);
-        return ResponseEntity.ok(ApiResponse.success("Balance topped up successfully", response));
-    }
-
 }
