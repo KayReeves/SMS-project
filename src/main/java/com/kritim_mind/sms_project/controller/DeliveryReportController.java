@@ -3,6 +3,7 @@ package com.kritim_mind.sms_project.controller;
 import com.kritim_mind.sms_project.dto.request.DeliveryReportRequest;
 import com.kritim_mind.sms_project.dto.response.ApiResponse;
 import com.kritim_mind.sms_project.dto.response.DeliveryReportResponse;
+import com.kritim_mind.sms_project.dto.response.DeliveryReportSummary;
 import com.kritim_mind.sms_project.service.Interface.DeliveryReportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -67,5 +68,11 @@ public class DeliveryReportController {
             @PathVariable("report_id") Long reportId) {
         reportService.deleteDeliveryReport(reportId);
         return ResponseEntity.ok(ApiResponse.success("Delivery report deleted successfully", null));
+    }
+
+    @GetMapping("/all-time-delivery-summary/{adminId}")
+    public ResponseEntity<ApiResponse<DeliveryReportSummary>> getAllTimeDeliverySummary(@PathVariable Long adminId) {
+        DeliveryReportSummary summary = reportService.getAllTimeDeliverySummary(adminId);
+        return ResponseEntity.ok(ApiResponse.success("Delivery summary fetch successfully",summary ));
     }
 }

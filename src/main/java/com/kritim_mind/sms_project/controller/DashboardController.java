@@ -1,8 +1,6 @@
 package com.kritim_mind.sms_project.controller;
 
-import com.kritim_mind.sms_project.dto.response.ApiResponse;
-import com.kritim_mind.sms_project.dto.response.DailyReportData;
-import com.kritim_mind.sms_project.dto.response.DashboardResponse;
+import com.kritim_mind.sms_project.dto.response.*;
 import com.kritim_mind.sms_project.service.Interface.DashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -30,19 +28,19 @@ public class DashboardController {
     }
 
     @GetMapping("/reports/daily")
-    public ResponseEntity<ApiResponse<List<DailyReportData>>> getDailyReport(
+    public ResponseEntity<ApiResponse<List<DeliveryReportSummary>>> getDailyReport(
             @RequestParam Long admin_id,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start_date,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end_date) {
-        List<DailyReportData> data = dashboardService.getDailyReport(admin_id, start_date, end_date);
+        List<DeliveryReportSummary> data = dashboardService.getDailyReport(admin_id, start_date, end_date);
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 
     @GetMapping("/reports/monthly")
-    public ResponseEntity<ApiResponse<List<DailyReportData>>> getMonthlyReport(
+    public ResponseEntity<ApiResponse<List<DeliveryReportSummary>>> getMonthlyReport(
             @RequestParam Long admin_id,
             @RequestParam int year) {
-        List<DailyReportData> data = dashboardService.getMonthlyReport(admin_id, year);
+        List<DeliveryReportSummary> data = dashboardService.getMonthlyReport(admin_id, year);
         return ResponseEntity.ok(ApiResponse.success(data));
     }
 }

@@ -53,4 +53,54 @@ public interface MessageRepository extends JpaRepository<Message,Long> {
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate
     );
+
+    @Query("""
+    SELECT
+        DATE(m.createdAt) as date,
+        SUM(DISTINCT m.totalSmsParts) AS totalSmsSent,
+        SUM(CASE WHEN dr.status = com.kritim_mind.sms_project.model.DeliveryStatus.DELIVERED THEN 1 ELSE 0 END),
+        SUM(CASE WHEN dr.status = com.kritim_mind.sms_project.model.DeliveryStatus.FAILED THEN 1 ELSE 0 END),
+        SUM(CASE WHEN dr.status = com.kritim_mind.sms_project.model.DeliveryStatus.PENDING THEN 1 ELSE 0 END)
+    FROM Message m
+    JOIN m.recipients mr
+    JOIN mr.deliveryReports dr
+    WHERE m.sender.id = :senderId
+      AND m.createdAt >= :startDate
+      AND m.createdAt < :endDate
+    GROUP BY DATE(m.createdAt)
+    ORDER BY DATE(m.createdAt)
+""")
+    List<Object[]> getDailyDeliveryStatusWithTotalSms(
+            @Param("senderId") Long senderId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
+
+
+
+    @Query("""
+    SELECT
+        FUNCTION('DATE_FORMAT', m.createdAt, '%Y-%m') as month,
+        SUM(DISTINCT m.totalSmsParts) AS totalSmsSent,
+        SUM(CASE WHEN dr.status = com.kritim_mind.sms_project.model.DeliveryStatus.DELIVERED THEN 1 ELSE 0 END),
+        SUM(CASE WHEN dr.status = com.kritim_mind.sms_project.model.DeliveryStatus.FAILED THEN 1 ELSE 0 END),
+        SUM(CASE WHEN dr.status = com.kritim_mind.sms_project.model.DeliveryStatus.PENDING THEN 1 ELSE 0 END)
+    FROM Message m
+    JOIN m.recipients mr
+    JOIN mr.deliveryReports dr
+    WHERE m.sender.id = :senderId
+      AND m.createdAt >= :startDate
+      AND m.createdAt < :endDate
+    GROUP BY FUNCTION('DATE_FORMAT', m.createdAt, '%Y-%m')
+    ORDER BY FUNCTION('DATE_FORMAT', m.createdAt, '%Y-%m')
+""")
+    List<Object[]> getMonthlyDeliveryStatusWithTotalSms(
+            @Param("senderId") Long senderId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
+    );
+
+
+
+
 }

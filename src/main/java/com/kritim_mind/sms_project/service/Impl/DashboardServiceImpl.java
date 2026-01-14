@@ -1,7 +1,7 @@
 package com.kritim_mind.sms_project.service.Impl;
 
-import com.kritim_mind.sms_project.dto.response.DailyReportData;
 import com.kritim_mind.sms_project.dto.response.DashboardResponse;
+import com.kritim_mind.sms_project.dto.response.DeliveryReportSummary;
 import com.kritim_mind.sms_project.exception.ResourceNotFoundException;
 import com.kritim_mind.sms_project.model.Admin;
 import com.kritim_mind.sms_project.repository.AdminRepository;
@@ -64,45 +64,53 @@ public class DashboardServiceImpl implements DashboardService {
 
     @Override
     @Transactional
-    public List<DailyReportData> getDailyReport(Long adminId, LocalDate startDate, LocalDate endDate) {
-        log.info("Fetching daily report for admin ID: {} from {} to {}",
-                adminId, startDate, endDate);
-
+    public List<DeliveryReportSummary> getDailyReport(Long adminId, LocalDate startDate, LocalDate endDate) {
         LocalDateTime start = startDate.atStartOfDay();
         LocalDateTime end = endDate.atTime(LocalTime.MAX);
 
-        List<Object[]> results = messageRepository.getDailySmsUsage(adminId, start, end);
+        List<Object[]> results = messageRepository.getDailyDeliveryStatusWithTotalSms(adminId, start, end);
 
-        List<DailyReportData> reportData = new ArrayList<>();
-        for (Object[] result : results) {
-            Date date = (Date) result[0];
-            Long total = ((Number) result[1]).longValue();
-            reportData.add(new DailyReportData(date.toLocalDate(), total));
+        List<DeliveryReportSummary> reportData = new ArrayList<>();
+        for (Object[] row : results) {
+            Long totalSmsSent = ((Number) row[1]).longValue();
+            Long delivered = ((Number) row[2]).longValue();
+            Long failed = ((Number) row[3]).longValue();
+            Long pending = ((Number) row[4]).longValue();
+
+            reportData.add(new DeliveryReportSummary(totalSmsSent, delivered, failed, pending));
         }
 
         return reportData;
     }
 
+
     @Override
     @Transactional
-    public List<DailyReportData> getMonthlyReport(Long adminId, int year) {
-        log.info("Fetching monthly report for admin ID: {} for year {}", adminId, year);
-
-        List<DailyReportData> monthlyData = new ArrayList<>();
+    public List<DeliveryReportSummary> getMonthlyReport(Long adminId, int year) {
+        List<DeliveryReportSummary> monthlyData = new ArrayList<>();
 
         for (int month = 1; month <= 12; month++) {
             YearMonth yearMonth = YearMonth.of(year, month);
             LocalDateTime start = yearMonth.atDay(1).atStartOfDay();
             LocalDateTime end = yearMonth.atEndOfMonth().atTime(LocalTime.MAX);
 
-            Long total = messageRepository.sumSmsPartsBySenderAndDateRange(adminId, start, end);
+            List<Object[]> results = messageRepository.getMonthlyDeliveryStatusWithTotalSms(adminId, start, end);
 
-            monthlyData.add(new DailyReportData(
-                    LocalDate.of(year, month, 1),
-                    total != null ? total : 0L
+            // If repository returns multiple rows (unlikely, but safe), sum them for the month
+            long totalSmsSent = 0, delivered = 0, failed = 0, pending = 0;
+            for (Object[] row : results) {
+                totalSmsSent += ((Number) row[1]).longValue();
+                delivered += ((Number) row[2]).longValue();
+                failed += ((Number) row[3]).longValue();
+                pending += ((Number) row[4]).longValue();
+            }
+
+            monthlyData.add(new DeliveryReportSummary(
+                    totalSmsSent, delivered, failed, pending
             ));
         }
 
         return monthlyData;
     }
+
 }

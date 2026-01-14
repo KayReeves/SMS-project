@@ -2,6 +2,7 @@ package com.kritim_mind.sms_project.service.Impl;
 
 import com.kritim_mind.sms_project.dto.request.DeliveryReportRequest;
 import com.kritim_mind.sms_project.dto.response.DeliveryReportResponse;
+import com.kritim_mind.sms_project.dto.response.DeliveryReportSummary;
 import com.kritim_mind.sms_project.exception.ResourceNotFoundException;
 import com.kritim_mind.sms_project.model.DeliveryReport;
 import com.kritim_mind.sms_project.model.DeliveryStatus;
@@ -28,7 +29,7 @@ public class DeliveryReportServiceImpl implements DeliveryReportService {
     private final DeliveryReportRepository reportRepository;
     private final MessageRecipientRepository recipientRepository;
 
-    // NEW: Get all delivery reports (sorted by newest first)
+
     @Override
     @Transactional
     public List<DeliveryReportResponse> getAllDeliveryReports() {
@@ -123,6 +124,17 @@ public class DeliveryReportServiceImpl implements DeliveryReportService {
 
         reportRepository.deleteById(id);
         log.info("Delivery report deleted successfully");
+    }
+
+    public DeliveryReportSummary getAllTimeDeliverySummary(Long adminId) {
+        Object[] result = reportRepository.getAllDeliveryStatusAndTotalSms(adminId);
+
+        Long totalSmsSent = ((Number) result[0]).longValue();
+        Long delivered = ((Number) result[1]).longValue();
+        Long failed = ((Number) result[2]).longValue();
+        Long pending = ((Number) result[3]).longValue();;
+
+        return new DeliveryReportSummary(totalSmsSent,delivered, failed, pending);
     }
 
     private DeliveryReportResponse mapToResponse(DeliveryReport report) {
